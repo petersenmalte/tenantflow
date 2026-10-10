@@ -28,7 +28,6 @@ node_modules/
 *_files/
 
 # Personal German user guide, not part of the public repository
-/ANLEITUNG.md
 
 # OS / editor
 .DS_Store
