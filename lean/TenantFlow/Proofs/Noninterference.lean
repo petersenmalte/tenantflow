@@ -533,6 +533,376 @@ theorem Sim.runStep_left {D₁ : Data T Ext Pay Sid} {B : T} {rs₁ rs₂ : RunS
     obtain ⟨hI, hE, hA⟩ := Step.leftOK (B := B) (hex ▸ hT) hS.fresh₁ hstep rs₁.hist
     exact hS.left (hex ▸ hT) (hS.fresh₁.step hstep) hI hE hA
 
+/-! ## Lockstep step of a clean agent (both runs) -/
+
+omit [DecidableEq Sid] in
+theorem callResp_eq_of_lowEq {D₁ D₂ : Data T Ext Pay Sid} {B : T} (hL : LowEq cfg B D₁ D₂)
+    {t : T} {k : ToolId Ext} {i : ToolInfo T} (hi : cfg.toolInfo t k = some i)
+    (hres : ∀ ℓr, i.result = some ℓr → readable B ℓr) (v : Pay) :
+    callResp D₁ k i v = callResp D₂ k i v := by
+  unfold callResp
+  cases k with
+  | deliver => rfl
+  | ext k' =>
+    cases h : i.result with
+    | none => rfl
+    | some ℓr =>
+      simp only
+      rw [hL.tool k' i ℓr (toolInfo_ext hi) h (hres ℓr h)]
+
+omit [DecidableEq Sid] in
+theorem readable_rank_label {B : T} (q : Qry) (L : List (Doc T Pay)) :
+    ∀ l ∈ (cfg.rank q (readableDocs B L)).map Doc.label, readable B l := by
+  intro l hl
+  obtain ⟨d, hd, rfl⟩ := List.mem_map.mp hl
+  exact mem_readableDocs (cfg.rank_mem _ _ _ hd)
+
+/-- Allowedness of a clean agent's action depends only on its state up to outbox and on the
+existence of its children (both equal in the two runs). -/
+theorem Allowed.transport {D₁ D₂ : Data T Ext Pay Sid} {s₁ s₂ : State T Ext Role Pay Sid}
+    {a : AgentId Sid} {σ₁ σ₂ : AgentState T Role Pay Sid}
+    (e₁ : s₁.agents a = some σ₁) (e₂ : s₂.agents a = some σ₂) (he : EqUpToOutbox σ₁ σ₂)
+    (hEx : ∀ c, s₁.agents (childId a c) = none ↔ s₂.agents (childId a c) = none)
+    {act : Action Ext Role Pay Qry} {r : Response Pay} {s₂' : State T Ext Role Pay Sid}
+    (h : Allowed cfg D₂ s₂ a act r s₂') : ∃ r' s₁', Allowed cfg D₁ s₁ a act r' s₁' := by
+  obtain ⟨hse, hce, hctx, hnc, hpar⟩ := he
+  cases h with
+  | @call σ p k v i hσ hp hauth hi hobs hint =>
+    rw [e₂] at hσ; cases hσ
+    exact ⟨_, _, Allowed.call e₁ (by rw [hse]; exact hp) (by rw [hce]; exact hauth) hi
+      (by rw [hctx]; exact hobs) (by rw [hctx]; exact hint)⟩
+  | @query σ p q hσ hp hauth =>
+    rw [e₂] at hσ; cases hσ
+    exact ⟨_, _, Allowed.query e₁ (by rw [hse]; exact hp) (by rw [hce]; exact hauth)⟩
+  | @write σ p v hσ hp hauth hown =>
+    rw [e₂] at hσ; cases hσ
+    exact ⟨_, _, Allowed.write e₁ (by rw [hse]; exact hp) (by rw [hce]; exact hauth)
+      (by rw [hctx]; exact hown)⟩
+  | @delegate σ p ρ v hσ hp hauth =>
+    rw [e₂] at hσ; cases hσ
+    exact ⟨_, _, Allowed.delegate e₁ (by rw [hse]; exact hp) (by rw [hce]; exact hauth)⟩
+  | @report σ p v hσ hp hpar' =>
+    rw [e₂] at hσ; cases hσ
+    exact ⟨_, _, Allowed.report e₁ (by rw [hse]; exact hp) (by rw [hpar]; exact hpar')⟩
+  | @receive σ p c σc hσ hp hc =>
+    rw [e₂] at hσ; cases hσ
+    cases hc₁ : s₁.agents (childId a c) with
+    | none => exact absurd ((hEx c).mp hc₁) (by simp [hc])
+    | some σc₁ => exact ⟨_, _, Allowed.receive e₁ (by rw [hse]; exact hp) hc₁⟩
+
+omit [DecidableEq Sid] in
+theorem LockOK.frame {B : T} {s₁ s₂ s₁' s₂' : State T Ext Role Pay Sid}
+    {hist₁ hist₂ hist₁' hist₂' : AgentId Sid → List (Response Pay)} {b : AgentId Sid}
+    (h₁ : s₁'.agents b = s₁.agents b) (h₂ : s₂'.agents b = s₂.agents b)
+    (h₃ : hist₁' b = hist₁ b) (h₄ : hist₂' b = hist₂ b) :
+    LockOK cfg B s₁ s₂ s₁' s₂' hist₁ hist₂ hist₁' hist₂' b := Or.inl ⟨h₁, h₂, h₃, h₄⟩
+
+omit [DecidableEq Sid] in
+theorem LockOK.clean {B : T} {s₁ s₂ s₁' s₂' : State T Ext Role Pay Sid}
+    {hist₁ hist₂ hist₁' hist₂' : AgentId Sid → List (Response Pay)} {b : AgentId Sid}
+    (hc : Clean cfg B (s₁'.agents b) (s₂'.agents b) (hist₁' b) (hist₂' b))
+    (hb : Clean cfg B (s₁.agents b) (s₂.agents b) (hist₁ b) (hist₂ b) ∨
+      (s₁.agents b = none ∧ s₂.agents b = none))
+    (himp : (s₁.agents b).map AgentState.outbox = (s₂.agents b).map AgentState.outbox →
+      (s₁'.agents b).map AgentState.outbox = (s₂'.agents b).map AgentState.outbox) :
+    LockOK cfg B s₁ s₂ s₁' s₂' hist₁ hist₂ hist₁' hist₂' b := Or.inr (Or.inl ⟨hc, hb, himp⟩)
+
+omit [DecidableEq Sid] in
+theorem LockOK.tainted {B : T} {s₁ s₂ s₁' s₂' : State T Ext Role Pay Sid}
+    {hist₁ hist₂ hist₁' hist₂' : AgentId Sid → List (Response Pay)} {b : AgentId Sid}
+    (h₁ : Tainted B (s₁'.agents b)) (h₂ : Tainted B (s₂'.agents b))
+    (hex : s₁'.agents b = none ↔ s₂'.agents b = none) :
+    LockOK cfg B s₁ s₂ s₁' s₂' hist₁ hist₂ hist₁' hist₂' b := Or.inr (Or.inr ⟨h₁, h₂, hex⟩)
+
+theorem Step.lockOK {D₁ D₂ : Data T Ext Pay Sid} {B : T} (hL : LowEq cfg B D₁ D₂)
+    {s₁ s₂ : State T Ext Role Pay Sid} {hist₁ hist₂ : AgentId Sid → List (Response Pay)}
+    (hS : Sim cfg B ⟨s₁, hist₁⟩ ⟨s₂, hist₂⟩) {a : AgentId Sid}
+    (hC : Clean cfg B (s₁.agents a) (s₂.agents a) (hist₁ a) (hist₂ a))
+    {act : Action Ext Role Pay Qry} {r₁ r₂ : Response Pay} {s₁' s₂' : State T Ext Role Pay Sid}
+    (h₁ : Step cfg D₁ s₁ a act r₁ s₁') (h₂ : Step cfg D₂ s₂ a act r₂ s₂') :
+    readableDocs B s₁'.index = readableDocs B s₂'.index ∧
+    obs cfg B s₁'.events = obs cfg B s₂'.events ∧
+    ∀ b, LockOK cfg B s₁ s₂ s₁' s₂' hist₁ hist₂ (histUpdate hist₁ a act r₁)
+      (histUpdate hist₂ a act r₂) b := by
+  have hI : readableDocs B s₁.index = readableDocs B s₂.index := hS.index
+  have hE : obs cfg B s₁.events = obs cfg B s₂.events := hS.events
+  have hEx : ∀ c, s₁.agents (childId a c) = none ↔ s₂.agents (childId a c) = none :=
+    hS.childEx a hC
+  obtain ⟨σ₁, σ₂, e₁, e₂, he, hr, ⟨p, hp, hpB⟩, hh⟩ := hC
+  have hC : Clean cfg B (s₁.agents a) (s₂.agents a) (hist₁ a) (hist₂ a) :=
+    ⟨σ₁, σ₂, e₁, e₂, he, hr, ⟨p, hp, hpB⟩, hh⟩
+  obtain ⟨hse, hce, hctx, hnc, hpar⟩ := he
+  cases h₁ with
+  | denied hd₁ =>
+    cases h₂ with
+    | allowed hal₂ =>
+      obtain ⟨r', s'', h'⟩ := Allowed.transport (D₁ := D₁) e₁ e₂ ⟨hse, hce, hctx, hnc, hpar⟩ hEx hal₂
+      exact absurd h' (hd₁ _ _)
+    | denied _ =>
+      refine ⟨hI, hE, fun b => ?_⟩
+      rw [histUpdate_of_ne_child ne_child_denied, histUpdate_of_ne_child ne_child_denied]
+      by_cases hb : b = a
+      · subst hb
+        refine LockOK.clean ⟨σ₁, σ₂, e₁, e₂, ⟨hse, hce, hctx, hnc, hpar⟩, hr, ⟨p, hp, hpB⟩, ?_⟩
+          (Or.inl hC) id
+        simp [hh]
+      · exact LockOK.frame rfl rfl (by simp [hb]) (by simp [hb])
+  | allowed hal₁ =>
+    cases hal₁ with
+    | @call σ p' k v i hσ hp' hauth hi hobs hint =>
+      rw [e₁] at hσ; cases hσ
+      rw [hp] at hp'; cases hp'
+      have hal₂ : Allowed cfg D₂ s₂ a (.call k v) (callResp D₂ k i v)
+          { s₂.setAgent a { σ₂ with ctx := i.joinResult σ₂.ctx } with
+              events := s₂.events ++ [⟨p.tenant, k, v, σ₂.ctx⟩] } :=
+        Allowed.call e₂ (by rw [← hse]; exact hp) (by rw [← hce]; exact hauth) hi
+          (by rw [← hctx]; exact hobs) (by rw [← hctx]; exact hint)
+      obtain ⟨rfl, rfl⟩ := Step.det h₂ (.allowed hal₂)
+      refine ⟨hI, ?_, fun b => ?_⟩
+      · show obs cfg B (s₁.events ++ [_]) = obs cfg B (s₂.events ++ [_])
+        rw [obs_append, obs_append, hE, hctx]
+      · rw [histUpdate_of_ne_child (callResp_ne_child D₁ k i v),
+          histUpdate_of_ne_child (callResp_ne_child D₂ k i v)]
+        by_cases hb : b = a
+        · subst hb
+          by_cases hres : ∀ ℓr, i.result = some ℓr → readable B ℓr
+          · -- the result is readable by B (or absent): the agent stays clean
+            have hresp := callResp_eq_of_lowEq hL hi hres v
+            refine LockOK.clean ?_ (Or.inl hC) ?_
+            · simp only [State.setAgent_agents, ite_true]
+              exact ⟨_, _, rfl, rfl, ⟨hse, hce, by simp [hctx], hnc, hpar⟩,
+                readable_joinResult hr hres, ⟨p, hp, hpB⟩, by simp [hh, hresp]⟩
+            · simp only [State.setAgent_agents, ite_true]
+              intro h; simpa [e₁, e₂] using h
+          · -- the result is not readable by B: the agent becomes tainted in both runs
+            have hjoin : ∀ ℓ, ¬ readable B (i.joinResult ℓ) := by
+              intro ℓ h
+              apply hres
+              intro ℓr hℓr
+              unfold ToolInfo.joinResult at h
+              rw [hℓr] at h
+              exact readable_mono (Label.le_join_right _ _) h
+            refine LockOK.tainted ?_ ?_ ?_ <;> simp only [State.setAgent_agents, ite_true]
+            · exact Tainted.of_not_readable (hjoin _)
+            · exact Tainted.of_not_readable (hjoin _)
+            · simp
+        · exact LockOK.frame (by simp [hb]) (by simp [hb]) (by simp [hb]) (by simp [hb])
+    | @query σ p' q hσ hp' hauth =>
+      rw [e₁] at hσ; cases hσ
+      rw [hp] at hp'; cases hp'
+      have hal₂ := Allowed.query (cfg := cfg) (D := D₂) (q := q) e₂ (by rw [← hse]; exact hp)
+        (by rw [← hce]; exact hauth)
+      obtain ⟨rfl, rfl⟩ := Step.det h₂ (.allowed hal₂)
+      subst hpB
+      refine ⟨hI, hE, fun b => ?_⟩
+      rw [histUpdate_of_ne_child (ne_child_payloads _), histUpdate_of_ne_child (ne_child_payloads _)]
+      by_cases hb : b = a
+      · subst hb
+        refine LockOK.clean ?_ (Or.inl hC) ?_
+        · simp only [State.setAgent_agents, ite_true]
+          exact ⟨_, _, rfl, rfl, ⟨hse, hce, by simp [hctx, hI], hnc, hpar⟩,
+            readable_join hr (readable_joinAll _ (readable_rank_label q s₁.index)), ⟨p, hp, rfl⟩,
+            by simp [hh, hI]⟩
+        · simp only [State.setAgent_agents, ite_true]
+          intro h; simpa [e₁, e₂] using h
+      · exact LockOK.frame (by simp [hb]) (by simp [hb]) (by simp [hb]) (by simp [hb])
+    | @write σ p' v hσ hp' hauth hown =>
+      rw [e₁] at hσ; cases hσ
+      rw [hp] at hp'; cases hp'
+      have hal₂ := Allowed.write (cfg := cfg) (D := D₂) (v := v) e₂ (by rw [← hse]; exact hp)
+        (by rw [← hce]; exact hauth) (by rw [← hctx]; exact hown)
+      obtain ⟨rfl, rfl⟩ := Step.det h₂ (.allowed hal₂)
+      refine ⟨?_, hE, fun b => ?_⟩
+      · show readableDocs B (s₁.index ++ [_]) = readableDocs B (s₂.index ++ [_])
+        rw [readableDocs_append, readableDocs_append, hI,
+          readableDocs_singleton_of_readable hr, readableDocs_singleton_of_readable (hctx ▸ hr), hctx]
+      · rw [histUpdate_of_ne_child ne_child_ok, histUpdate_of_ne_child ne_child_ok]
+        by_cases hb : b = a
+        · subst hb
+          refine LockOK.clean ⟨σ₁, σ₂, e₁, e₂, ⟨hse, hce, hctx, hnc, hpar⟩, hr, ⟨p, hp, hpB⟩, ?_⟩
+            (Or.inl hC) id
+          simp [hh]
+        · exact LockOK.frame rfl rfl (by simp [hb]) (by simp [hb])
+    | @delegate σ p' ρ v hσ hp' hauth =>
+      rw [e₁] at hσ; cases hσ
+      rw [hp] at hp'; cases hp'
+      have hal₂ := Allowed.delegate (cfg := cfg) (D := D₂) (ρ := ρ) (v := v) e₂
+        (by rw [← hse]; exact hp) (by rw [← hce]; exact hauth)
+      obtain ⟨rfl, rfl⟩ := Step.det h₂ (.allowed hal₂)
+      rw [← hnc]
+      refine ⟨hI, hE, fun b => ?_⟩
+      rw [histUpdate_delegate, histUpdate_delegate]
+      by_cases hbc : b = childId a σ₁.nextChild
+      · subst hbc
+        refine LockOK.clean ?_ (Or.inr ⟨hS.fresh₁.next a σ₁ e₁ _ (Nat.le_refl _),
+            hS.fresh₂.next a σ₂ e₂ _ (Nat.le_of_eq hnc.symm)⟩) ?_
+        · simp only [State.setAgent_agents, ite_true]
+          exact ⟨_, _, rfl, rfl, ⟨hse, rfl, hctx, rfl, rfl⟩, hr, ⟨p, hp, hpB⟩, rfl⟩
+        · simp only [State.setAgent_agents, ite_true]
+          intro _; rfl
+      · by_cases hb : b = a
+        · subst hb
+          refine LockOK.clean ?_ (Or.inl hC) ?_
+          · simp only [State.setAgent_agents, ne_childId, ite_false, ite_true]
+            exact ⟨_, _, rfl, rfl, ⟨hse, hce, hctx, rfl, hpar⟩, hr, ⟨p, hp, hpB⟩, by simp [hh]⟩
+          · simp only [State.setAgent_agents, ne_childId, ite_false, ite_true]
+            intro h; simpa [e₁, e₂] using h
+        · exact LockOK.frame (by simp [hb, hbc]) (by simp [hb, hbc]) (by simp [hb, hbc])
+            (by simp [hb, hbc])
+    | @report σ p' v hσ hp' hpar' =>
+      rw [e₁] at hσ; cases hσ
+      rw [hp] at hp'; cases hp'
+      have hal₂ := Allowed.report (cfg := cfg) (D := D₂) (v := v) e₂ (by rw [← hse]; exact hp)
+        (by rw [← hpar]; exact hpar')
+      obtain ⟨rfl, rfl⟩ := Step.det h₂ (.allowed hal₂)
+      refine ⟨hI, hE, fun b => ?_⟩
+      rw [histUpdate_of_ne_child ne_child_ok, histUpdate_of_ne_child ne_child_ok]
+      by_cases hb : b = a
+      · subst hb
+        refine LockOK.clean ?_ (Or.inl hC) ?_
+        · simp only [State.setAgent_agents, ite_true]
+          exact ⟨_, _, rfl, rfl, ⟨hse, hce, hctx, hnc, hpar⟩, hr, ⟨p, hp, hpB⟩, by simp [hh]⟩
+        · simp only [State.setAgent_agents, ite_true, e₁, e₂, Option.map_some, Option.some.injEq]
+          intro h; rw [h]
+      · exact LockOK.frame (by simp [hb]) (by simp [hb]) (by simp [hb]) (by simp [hb])
+    | @receive σ p' c σc hσ hp' hc =>
+      rw [e₁] at hσ; cases hσ
+      rw [hp] at hp'; cases hp'
+      obtain ⟨σc₂, hc₂⟩ : ∃ σc₂, s₂.agents (childId a c) = some σc₂ := by
+        cases h : s₂.agents (childId a c) with
+        | none => exact absurd ((hEx c).mpr h) (by simp [hc])
+        | some τ => exact ⟨τ, rfl⟩
+      have hal₂ := Allowed.receive (cfg := cfg) (D := D₂) e₂ (by rw [← hse]; exact hp) hc₂
+      obtain ⟨rfl, rfl⟩ := Step.det h₂ (.allowed hal₂)
+      refine ⟨hI, hE, fun b => ?_⟩
+      rw [histUpdate_of_ne_child (ne_child_payloads _), histUpdate_of_ne_child (ne_child_payloads _)]
+      rcases hS.agents (childId a c) with ⟨τ₁, τ₂, f₁, f₂, hec, hrc, hpc, hhc⟩ | ⟨t₁, t₂⟩
+      · -- the child is clean: identical outboxes (clause (iv)), the parent stays clean
+        have hob : σc.outbox = σc₂.outbox := by
+          have := hS.childOutbox a hC c ⟨τ₁, τ₂, f₁, f₂, hec, hrc, hpc, hhc⟩
+          simp only [hc, hc₂, Option.map_some, Option.some.injEq] at this
+          exact this
+        simp only [hc, Option.some.injEq] at f₁; subst f₁
+        simp only [hc₂, Option.some.injEq] at f₂; subst f₂
+        by_cases hbc : b = childId a c
+        · subst hbc
+          refine LockOK.clean ?_ (Or.inl ⟨_, _, hc, hc₂, hec, hrc, hpc, hhc⟩) ?_
+          · simp only [State.setAgent_agents, ite_true, childId_ne, ite_false]
+            exact ⟨_, _, rfl, rfl, hec, hrc, hpc, hhc⟩
+          · simp only [State.setAgent_agents, ite_true]
+            intro _; rfl
+        · by_cases hb : b = a
+          · subst hb
+            refine LockOK.clean ?_ (Or.inl hC) ?_
+            · simp only [State.setAgent_agents, ne_childId, ite_false, ite_true]
+              exact ⟨_, _, rfl, rfl, ⟨hse, hce, by simp [hctx, hec.2.2.1], hnc, hpar⟩,
+                readable_join hr hrc, ⟨p, hp, hpB⟩, by simp [hh, hob]⟩
+            · simp only [State.setAgent_agents, ne_childId, ite_false, ite_true]
+              intro h; simpa [e₁, e₂] using h
+          · exact LockOK.frame (by simp [hb, hbc]) (by simp [hb, hbc]) (by simp [hb]) (by simp [hb])
+      · -- the child is tainted in both runs: the parent becomes tainted in both runs
+        have hnr₁ : ¬ readable B σc.ctx := t₁ σc hc
+        have hnr₂ : ¬ readable B σc₂.ctx := t₂ σc₂ hc₂
+        by_cases hbc : b = childId a c
+        · subst hbc
+          refine LockOK.tainted ?_ ?_ ?_ <;> simp only [State.setAgent_agents, ite_true]
+          · exact Tainted.of_not_readable hnr₁
+          · exact Tainted.of_not_readable hnr₂
+          · simp
+        · by_cases hb : b = a
+          · subst hb
+            refine LockOK.tainted ?_ ?_ ?_ <;>
+              simp only [State.setAgent_agents, ne_childId, ite_false, ite_true]
+            · exact Tainted.of_not_readable fun h => hnr₁ (readable_mono (Label.le_join_right _ _) h)
+            · exact Tainted.of_not_readable fun h => hnr₂ (readable_mono (Label.le_join_right _ _) h)
+            · simp
+          · exact LockOK.frame (by simp [hb, hbc]) (by simp [hb, hbc]) (by simp [hb]) (by simp [hb])
+
+/-! ## Lockstep over the schedule and the initial state -/
+
+/-- One scheduled move of the same agent in both runs preserves `Sim`. -/
+theorem Sim.step_both {D₁ D₂ : Data T Ext Pay Sid} {B : T} (hL : LowEq cfg B D₁ D₂)
+    (strat : AgentId Sid → Strategy Ext Role Pay Qry) {rs₁ rs₂ : RunState T Ext Role Pay Sid}
+    (hS : Sim cfg B rs₁ rs₂) (a : AgentId Sid) :
+    Sim cfg B (runStep cfg D₁ strat rs₁ a) (runStep cfg D₂ strat rs₂ a) := by
+  rcases hS.agents a with hc | ⟨ht₁, ht₂⟩
+  · obtain ⟨s₁, hist₁⟩ := rs₁
+    obtain ⟨s₂, hist₂⟩ := rs₂
+    obtain ⟨σ₁, σ₂, e₁, e₂, he, hr, hp, hh⟩ := hc
+    have hc : Clean cfg B (s₁.agents a) (s₂.agents a) (hist₁ a) (hist₂ a) :=
+      ⟨σ₁, σ₂, e₁, e₂, he, hr, hp, hh⟩
+    simp only at e₁ e₂ hh
+    unfold runStep
+    simp only [e₁, e₂, hh]
+    have h₁ := stepFn_spec (cfg := cfg) D₁ s₁ a (strat a (hist₂ a))
+    have h₂ := stepFn_spec (cfg := cfg) D₂ s₂ a (strat a (hist₂ a))
+    obtain ⟨hI, hE, hA⟩ := Step.lockOK hL hS (hh ▸ hc) h₁ h₂
+    exact hS.lock (hS.fresh₁.step h₁) (hS.fresh₂.step h₂) hI hE hA
+  · exact ((hS.runStep_left strat ht₁).symm.runStep_left strat ht₂).symm
+
+theorem Sim.run_all {D₁ D₂ : Data T Ext Pay Sid} {B : T} (hL : LowEq cfg B D₁ D₂)
+    (strat : AgentId Sid → Strategy Ext Role Pay Qry) {rs₁ rs₂ : RunState T Ext Role Pay Sid}
+    (hS : Sim cfg B rs₁ rs₂) (sched : List (AgentId Sid)) :
+    Sim cfg B (runAll cfg D₁ strat sched rs₁) (runAll cfg D₂ strat sched rs₂) := by
+  induction sched generalizing rs₁ rs₂ with
+  | nil => exact hS
+  | cons a sched ih => exact ih (hS.step_both hL strat a)
+
+omit [DecidableEq Sid] in
+theorem init_agents_childId (D : Data T Ext Pay Sid) (a : AgentId Sid) (c : Nat) :
+    (init cfg D).agents (childId a c) = none := by
+  obtain ⟨sid, l⟩ := a
+  cases l <;> rfl
+
+theorem readable_rootCtx (t : T) : readable t (rootCtx t) := fun _ h => h
+
+theorem not_readable_rootCtx {t B : T} (h : t ≠ B) : ¬ readable B (rootCtx t) :=
+  fun hr => h (hr t rfl)
+
+omit [DecidableEq Sid] in
+/-- The initial run states of two low-equivalent data sets are related. -/
+theorem Sim.of_lowEq_init {D₁ D₂ : Data T Ext Pay Sid} {B : T} (hL : LowEq cfg B D₁ D₂) :
+    Sim cfg B (initRun cfg D₁) (initRun cfg D₂) where
+  fresh₁ := Fresh.init
+  fresh₂ := Fresh.init
+  index := hL.index₀
+  events := rfl
+  agents := by
+    intro ⟨sid, l⟩
+    cases l with
+    | cons _ _ => exact Or.inr ⟨Tainted.none, Tainted.none⟩
+    | nil =>
+      show Clean cfg B ((cfg.sessions sid).map _) ((cfg.sessions sid).map _) _ _ ∨
+        (Tainted B ((cfg.sessions sid).map _) ∧ Tainted B ((cfg.sessions sid).map _))
+      cases hs : cfg.sessions sid with
+      | none => exact Or.inr ⟨Tainted.none, Tainted.none⟩
+      | some p =>
+        by_cases hpB : p.tenant = B
+        · left
+          refine ⟨_, _, rfl, rfl, EqUpToOutbox.refl _, hpB ▸ readable_rootCtx _, ⟨p, hs, hpB⟩, ?_⟩
+          show [Response.payload (D₁.prompt sid)] = [Response.payload (D₂.prompt sid)]
+          rw [hL.prompt sid p hs hpB]
+        · right
+          exact ⟨Tainted.of_not_readable (not_readable_rootCtx hpB),
+            Tainted.of_not_readable (not_readable_rootCtx hpB)⟩
+  childEx := by
+    intro a _ c
+    show (init cfg D₁).agents (childId a c) = none ↔ (init cfg D₂).agents (childId a c) = none
+    rw [init_agents_childId, init_agents_childId]
+  childOutbox := by
+    intro a _ c hcc
+    exact absurd (init_agents_childId (cfg := cfg) D₁ a c) hcc.isSome.1
+
+/-! ## Theorem (c) -/
+
+/-- **Theorem (c), noninterference** (`docs/spec.md` §7.4): for every configuration, every family of
+strategies, every schedule and every observer tenant `B`, low-equivalent data sets produce the same
+`B`-observable events. -/
+theorem noninterference (strat : AgentId Sid → Strategy Ext Role Pay Qry) (sched : List (AgentId Sid))
+    (B : T) {D₁ D₂ : Data T Ext Pay Sid} (hL : LowEq cfg B D₁ D₂) :
+    obs cfg B (run cfg strat sched D₁) = obs cfg B (run cfg strat sched D₂) :=
+  (Sim.run_all hL strat (Sim.of_lowEq_init hL) sched).events
+
 end
 
 end TenantFlow.Model
