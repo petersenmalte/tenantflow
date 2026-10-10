@@ -7,7 +7,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 
 | Gate | Condition | Fallback if missed |
 |---|---|---|
-| G1 | F1a + F1b done with ≤ 25 USD spent | Simplify the model: exactly two tenants, no delegation, (b) only for adapter writes. Then retry F1b once. |
+| G1 | F1a + F1b done with ≤ 25 USD spent | Simplify the model: exactly two tenants, drop delegation (`delegate`/`report`/`receive`), restrict (b2) to index docs and events. Then retry F1b once. |
 | G2 | F2 done with ≤ 45 USD spent | Weaken (c) to noninterference of RAG query results only (single query step, not whole traces), or drop (c) and go to F3. |
 | Hard stop | No new FABLE task above 55 USD spent | Remaining budget is reserve for fixes found by differential testing. |
 
@@ -17,8 +17,9 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 |---|---|---|---|---|
 | S0 | [SONNET] | – | done | Repository setup |
 | O1 | [OPUS] | S0 | done | Draft the formal spec |
-| F0 | [FABLE] | O1 | open | Adversarial spec review, final theorem statements |
-| F1a | [FABLE] | F0 | open | Lean model + executable monitor + theorem (a) isolation |
+| F0 | [FABLE] | O1 | done | Adversarial spec review, final theorem statements |
+| S0b | [SONNET] | S0 | open | Lean toolchain for cloud sessions (SessionStart hook / setup script) |
+| F1a | [FABLE] | F0, S0b | open | Lean model + executable monitor + theorem (a) isolation |
 | F1b | [FABLE] | F1a | open | Theorem (b) no label forgery / no laundering |
 | S1 | [SONNET] | F1a | open | Lean oracle executable |
 | S2 | [SONNET] | F1a | open | Python package: adapter, monitor, Cedar per-call check |
@@ -64,18 +65,29 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 - Write `docs/spec-review.md` (findings, decisions). Optional: Lean signatures with `sorry`, only if cheap.
 - Budget target: 3–5 USD.
 
+### S0b [SONNET] Lean toolchain for cloud sessions
+- In the F0 cloud session `lake`/`elan` were not installed, so `lake build` cannot run. Add a SessionStart hook
+  (skill `session-start-hook`) or setup script that installs elan and the toolchain pinned in `lean/lean-toolchain`
+  (v4.34.1) and runs `lake build` once so the cache is warm. Verify `cd lean && lake build` passes in a fresh session.
+- Do not touch `Model/`, `Exec/`, `Proofs/`.
+
 ### F1a [FABLE] Lean model + executable monitor + theorem (a)
+- Follow `docs/spec.md` v0.2 exactly: six actions (`call, query, write, delegate, report, receive`), tool registry
+  `(observers, needsTrusted, result)`, `rank_mem`, `GState` ghost layer with `ghost_proj`/`ghost_lift`,
+  lemmas `Step.det`/`Step.total`, sanity examples §7.7 (1–7). Read `docs/spec-review.md` §C first.
 - `Model/`: abstract relational semantics (inductive step relation, agent chooses any action).
 - `Exec/`: computable monitor (`step : State → Action → Decision × State`) over concrete data structures,
   designed so that F3 can prove refinement and S1 can call it from `main`.
 - Prove (a) isolation. DoD per `CLAUDE.md` section 5. Budget target: 8–12 USD.
 
 ### F1b [FABLE] Theorem (b) no label forgery / no laundering
-- Labels depend only on trusted metadata (session principal, source registry) and input labels, never on payload
-  content (including payload fields that look like labels); output labels are at least as restrictive as the join
-  of the input labels. Budget target: 7–10 USD. **Check G1 afterwards.**
+- (b) = (b2) of `docs/spec.md` §7.3 on `GState`: every object's label dominates the join of the registry labels of
+  its origins, `ctx` monotone, child `ctx` = parent `ctx` at creation. (b1) only as an `Exec` lemma and only if it
+  costs ≤ 1 USD (design rule D8 is the primary guarantee). Budget target: 7–10 USD. **Check G1 afterwards.**
 
 ### S1 [SONNET] Lean oracle executable
+- Actions and registry format follow `docs/spec.md` v0.2 §4.1/§4.4 (`call k args` with `observers`, `needsTrusted`,
+  `result`; no separate read/send).
 - `lean/Oracle/Main.lean`, `lake exe oracle`: reads a JSON trace (list of actions + initial state) from stdin,
   runs `Exec.step`, prints decisions and resulting labels as JSON. JSON format documented in `docs/oracle-format.md`.
 - Do not touch `Model/`, `Exec/`, `Proofs/`. Tests with 5 hand-written traces.
@@ -94,12 +106,12 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 - Counterexamples are minimized and stored in `docs/discrepancies.md` (see `CLAUDE.md` 3.3).
 
 ### F2 [FABLE] Theorem (c) noninterference
-- Two initial states that differ only in tenant-A data: everything delivered to tenant-B principals is identical
-  (termination-insensitive; side channels excluded). Budget target: 15–20 USD. **Check G2 afterwards.**
+- Statement and low-equivalence as in `docs/spec.md` §7.4; use the simulation relation sketched there, including
+  clause (iii) "clean-and-identical or absent-or-tainted". Budget target: 15–20 USD. **Check G2 afterwards.**
 
 ### F3 [FABLE] Theorem (d) refinement
-- Abstraction function from `Exec` state to `Model` state; every accepted exec step corresponds to an abstract
-  step, every rejected one has none. Budget target: 8–10 USD, hard cap.
+- (d1) forward simulation with denial reasons collapsed by `⌊·⌋`, (d2) initial states agree (`docs/spec.md` §7.5);
+  "rejected ⇒ no abstract step" is a corollary of `Step.det`. Budget target: 8–10 USD, hard cap.
 
 ### S4 [SONNET] Baselines
 - `none` (no protection), `cedar-only`, `fides`: the label middleware of Microsoft Agent Framework (pin a version in
