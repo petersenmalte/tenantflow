@@ -18,7 +18,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S0 | [SONNET] | – | done | Repository setup |
 | O1 | [OPUS] | S0 | done | Draft the formal spec |
 | F0 | [FABLE] | O1 | done | Adversarial spec review, final theorem statements |
-| S0b | [SONNET] | S0 | open | Lean toolchain for cloud sessions (SessionStart hook / setup script) |
+| S0b | [SONNET] | S0 | done | Lean toolchain for cloud sessions (SessionStart hook / setup script) |
 | F1a | [FABLE] | F0, S0b | open | Lean model + executable monitor + theorem (a) isolation |
 | F1b | [FABLE] | F1a | open | Theorem (b) no label forgery / no laundering |
 | S1 | [SONNET] | F1a | open | Lean oracle executable |
