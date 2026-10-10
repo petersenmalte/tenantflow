@@ -1,0 +1,10 @@
+# Fable budget log
+
+Total budget: **60 USD** (model `claude-fable-5-1`, only for `[FABLE]` tasks).
+Gates: G1 ≤ 25 USD after F1a + F1b · G2 ≤ 45 USD after F2 · no new FABLE task above 55 USD.
+
+The user fills in "spent after" at the end of every Fable session (cost shown by Claude Code / usage page).
+
+| Date | Task | Spent before (USD) | Spent after (USD) | Result / note |
+|---|---|---|---|---|
+| | | 0.00 | | |

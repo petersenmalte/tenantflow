@@ -1,0 +1,36 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Lean / Lake
+lean/.lake/
+.lake/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+
+# Quarto
+.quarto/
+/web/deck/_site/
+*_files/
+
+# Personal German user guide, not part of the public repository
+/ANLEITUNG.md
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

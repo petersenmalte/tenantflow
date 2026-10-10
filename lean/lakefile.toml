@@ -1,0 +1,6 @@
+name = "TenantFlow"
+version = "0.0.0"
+defaultTargets = ["TenantFlow"]
+
+[[lean_lib]]
+name = "TenantFlow"
