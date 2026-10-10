@@ -16,7 +16,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | ID | Tag | Depends on | Status | Title |
 |---|---|---|---|---|
 | S0 | [SONNET] | – | done | Repository setup |
-| O1 | [OPUS] | S0 | open | Draft the formal spec |
+| O1 | [OPUS] | S0 | done | Draft the formal spec |
 | F0 | [FABLE] | O1 | open | Adversarial spec review, final theorem statements |
 | F1a | [FABLE] | F0 | open | Lean model + executable monitor + theorem (a) isolation |
 | F1b | [FABLE] | F1a | open | Theorem (b) no label forgery / no laundering |
