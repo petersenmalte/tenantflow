@@ -7,7 +7,7 @@ The user fills in "spent after" at the end of every Fable session (cost shown by
 
 | Date | Task | Spent before (USD) | Spent after (USD) | Result / note |
 |---|---|---|---|---|
-| 2026-10-10 | F0 | 0.00 | 6.00 | spec v0.2 + `docs/spec-review.md`; no Lean code (signature sketch skipped to save budget) |
+| 2026-10-10 | F0 | 0.00 | 6.00 | spec v0.2 + `docs/spec-review.md`; no Lean (toolchain missing in cloud session → S0b) |
 | 2026-10-10 | F1a | 6.00 | 14.00 | model, exec monitor, Step.det/total, ghost layer, (a) + (a-int), rank_mem, sanity 1–7; no sorry |
 | 2026-10-10 | F1b | 14.00 | 22.00 | (b2) `no_launder`, `ctx_mono`, `child_ctx_eq`, invariant `Fresh`; (b1) dropped; no sorry |
 | 2026-10-10 | F2 | 22.00 | (fill in) | (c) `noninterference` with `run`/`LowEq`/`obs` and relation `Sim`; no sorry. G2 passes iff the value filled in here is ≤ 45 |
