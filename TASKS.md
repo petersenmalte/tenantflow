@@ -21,7 +21,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S0b | [SONNET] | S0 | done | Lean toolchain for cloud sessions (SessionStart hook / setup script) |
 | F1a | [FABLE] | F0, S0b | done | Lean model + executable monitor + theorem (a) isolation |
 | F1b | [FABLE] | F1a | done | Theorem (b) no label forgery / no laundering |
-| S1 | [SONNET] | F1a | open | Lean oracle executable |
+| S1 | [SONNET] | F1a | done | Lean oracle executable |
 | S2 | [SONNET] | F1a | open | Python package: adapter, monitor, Cedar per-call check |
 | S3 | [SONNET] | S1, S2 | open | Differential testing Python ↔ Lean oracle |
 | F2 | [FABLE] | F1b | done | Theorem (c) noninterference for the shared RAG index |

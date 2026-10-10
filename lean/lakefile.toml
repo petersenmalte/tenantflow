@@ -4,3 +4,7 @@ defaultTargets = ["TenantFlow"]
 
 [[lean_lib]]
 name = "TenantFlow"
+
+[[lean_exe]]
+name = "oracle"
+root = "Oracle.Main"

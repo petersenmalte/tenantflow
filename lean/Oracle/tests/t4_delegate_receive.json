@@ -1,0 +1,129 @@
+{
+ "sessions": [
+  {
+   "sid": "1",
+   "tenant": "bank",
+   "user": "u1",
+   "role": "r"
+  },
+  {
+   "sid": "2",
+   "tenant": "bank",
+   "user": "u2",
+   "role": "r"
+  },
+  {
+   "sid": "3",
+   "tenant": "insurer",
+   "user": "u3",
+   "role": "r"
+  }
+ ],
+ "tools": {
+  "bankSrc": {
+   "observers": [],
+   "result": {
+    "owners": [
+     "bank"
+    ],
+    "integrity": "trusted"
+   }
+  },
+  "insurerTool": {
+   "observers": [
+    "insurer"
+   ]
+  },
+  "taintedSrc": {
+   "observers": [],
+   "result": {
+    "owners": [
+     "bank"
+    ],
+    "integrity": "untrusted"
+   }
+  }
+ },
+ "toolResults": {
+  "bankSrc": "bank secret",
+  "taintedSrc": {
+   "security_label": {
+    "owners": [],
+    "integrity": "trusted"
+   }
+  }
+ },
+ "topK": 10,
+ "trace": [
+  {
+   "agent": {
+    "session": "3",
+    "path": []
+   },
+   "action": {
+    "op": "delegate",
+    "role": "r2",
+    "task": "t"
+   }
+  },
+  {
+   "agent": {
+    "session": "3",
+    "path": [
+     0
+    ]
+   },
+   "action": {
+    "op": "call",
+    "tool": "bankSrc",
+    "args": "q"
+   }
+  },
+  {
+   "agent": {
+    "session": "3",
+    "path": [
+     0
+    ]
+   },
+   "action": {
+    "op": "call",
+    "tool": "deliver",
+    "args": "x"
+   }
+  },
+  {
+   "agent": {
+    "session": "3",
+    "path": [
+     0
+    ]
+   },
+   "action": {
+    "op": "report",
+    "payload": "r"
+   }
+  },
+  {
+   "agent": {
+    "session": "3",
+    "path": []
+   },
+   "action": {
+    "op": "receive",
+    "child": 0
+   }
+  },
+  {
+   "agent": {
+    "session": "3",
+    "path": []
+   },
+   "action": {
+    "op": "call",
+    "tool": "insurerTool",
+    "args": "y"
+   }
+  }
+ ]
+}
