@@ -1,0 +1,391 @@
+import TenantFlow.Proofs
+
+/-!
+# Theorem (c) Noninterference (`docs/spec.md` §7.4)
+
+Agents are strategies `List (Response Pay) → Action`; a schedule is a list of agent ids; `run` is the
+event list after the schedule.  Low equivalence `LowEq cfg B D₁ D₂` and observation `obs cfg B` are
+§7.4 verbatim.  The proof is a lockstep simulation over the schedule with the relation `Sim`:
+(i) B-readable index equal, (ii) B-observable events equal, (iii) every agent is *clean in both runs*
+(same state up to outbox, same history, session tenant `B`, ctx readable by `B`) or *absent-or-tainted
+in each run*, (iv) children of a clean agent exist in one run iff in the other, and a clean child of a
+clean parent has the same outbox in both runs.  (iv) is the strengthening of the spec's clause (iii)
+needed for `receive`; the outbox exception in (iii) is needed because a tainted parent may `receive`
+(and so clear the outbox of) a clean child in one run only.
+-/
+
+namespace TenantFlow.Model
+
+section
+variable {T U Ext Role Req Qry Pay Sid : Type} {cfg : Config T U Ext Role Req Qry Pay Sid}
+
+/-! ## §7.4 definitions (those not needing decidable equality) -/
+
+/-- A strategy maps the agent's own observation history to its next action. -/
+abbrev Strategy (Ext Role Pay Qry : Type) := List (Response Pay) → Action Ext Role Pay Qry
+
+/-- Run state: monitor state plus the observation history of every agent id. -/
+structure RunState (T Ext Role Pay Sid : Type) where
+  state : State T Ext Role Pay Sid
+  hist : AgentId Sid → List (Response Pay)
+
+/-- Initial run state: `init cfg D`; every root agent has observed its prompt. -/
+def initRun (cfg : Config T U Ext Role Req Qry Pay Sid) (D : Data T Ext Pay Sid) :
+    RunState T Ext Role Pay Sid where
+  state := init cfg D
+  hist := fun a => match a.2 with
+    | [] => [.payload (D.prompt a.1)]
+    | _ => []
+
+/-- Low equivalence `D₁ ≈_B D₂` (§7.4). -/
+structure LowEq (cfg : Config T U Ext Role Req Qry Pay Sid) (B : T) (D₁ D₂ : Data T Ext Pay Sid) :
+    Prop where
+  tool : ∀ k i ℓ, cfg.extReg k = some i → i.result = some ℓ → readable B ℓ → D₁.tool k = D₂.tool k
+  index₀ : readableDocs B D₁.index₀ = readableDocs B D₂.index₀
+  prompt : ∀ s p, cfg.sessions s = some p → p.tenant = B → D₁.prompt s = D₂.prompt s
+
+/-! ## Generic facts about labels, filters and observations -/
+
+open Classical in
+/-- `obs_B`: the events whose observers include `B` (§7.4). -/
+noncomputable def obs (cfg : Config T U Ext Role Req Qry Pay Sid) (B : T)
+    (evs : List (Event T Ext Pay)) : List (Event T Ext Pay) :=
+  evs.filter fun e => decide (cfg.observersOf e B)
+
+/-- `a` is absent or tainted (context not readable by `B`). -/
+def Tainted (B : T) (o : Option (AgentState T Role Pay Sid)) : Prop :=
+  ∀ σ, o = some σ → ¬ readable B σ.ctx
+
+theorem Tainted.none {B : T} : Tainted B (none : Option (AgentState T Role Pay Sid)) :=
+  fun _ h => nomatch h
+
+theorem Tainted.of_le {B : T} {σ σ' : AgentState T Role Pay Sid} (h : σ.ctx ≤ σ'.ctx)
+    (ht : Tainted B (some σ)) : Tainted B (some σ') :=
+  fun τ hτ hr => by cases hτ; exact ht σ rfl (readable_mono h hr)
+
+theorem readable_join {B : T} {l₁ l₂ : Label T} (h₁ : readable B l₁) (h₂ : readable B l₂) :
+    readable B (l₁.join l₂) :=
+  fun t ht => ht.elim (h₁ t) (h₂ t)
+
+theorem readable_joinAll {B : T} (ls : List (Label T)) (h : ∀ l ∈ ls, readable B l) :
+    readable B (Label.joinAll ls) := by
+  induction ls with
+  | nil => exact fun _ h => h.elim
+  | cons l ls ih =>
+    exact readable_join (h l (List.Mem.head _)) (ih fun l' hl' => h l' (List.Mem.tail _ hl'))
+
+theorem readable_joinResult {B : T} {i : ToolInfo T} {ℓ : Label T} (hℓ : readable B ℓ)
+    (hr : ∀ ℓr, i.result = some ℓr → readable B ℓr) : readable B (i.joinResult ℓ) := by
+  unfold ToolInfo.joinResult
+  cases h : i.result with
+  | none => exact hℓ
+  | some ℓr => exact readable_join hℓ (hr ℓr h)
+
+theorem le_joinResult (i : ToolInfo T) (ℓ : Label T) : ℓ ≤ i.joinResult ℓ := by
+  unfold ToolInfo.joinResult
+  cases i.result
+  · exact Label.le_refl _
+  · exact Label.le_join_left _ _
+
+theorem readableDocs_append (t : T) (L₁ L₂ : List (Doc T Pay)) :
+    readableDocs t (L₁ ++ L₂) = readableDocs t L₁ ++ readableDocs t L₂ := by
+  unfold readableDocs; exact List.filter_append ..
+
+theorem readableDocs_singleton_of_readable {t : T} {d : Doc T Pay} (h : readable t d.label) :
+    readableDocs t [d] = [d] := by
+  unfold readableDocs; simp [h]
+
+theorem readableDocs_singleton_of_not {t : T} {d : Doc T Pay} (h : ¬ readable t d.label) :
+    readableDocs t [d] = [] := by
+  unfold readableDocs; simp [h]
+
+theorem mem_readableDocs {t : T} {d : Doc T Pay} {L : List (Doc T Pay)} (h : d ∈ readableDocs t L) :
+    readable t d.label := by
+  unfold readableDocs at h
+  have := (List.mem_filter.mp h).2
+  simpa using this
+
+theorem obs_append (B : T) (e₁ e₂ : List (Event T Ext Pay)) :
+    obs cfg B (e₁ ++ e₂) = obs cfg B e₁ ++ obs cfg B e₂ := by
+  unfold obs; exact List.filter_append ..
+
+theorem obs_singleton_of_not {B : T} {e : Event T Ext Pay} (h : ¬ cfg.observersOf e B) :
+    obs cfg B [e] = [] := by
+  unfold obs; simp [h]
+
+
+/-! ## The simulation relation -/
+
+/-- Equal agent states up to the outbox. -/
+def EqUpToOutbox (σ₁ σ₂ : AgentState T Role Pay Sid) : Prop :=
+  σ₁.session = σ₂.session ∧ σ₁.cedarP = σ₂.cedarP ∧ σ₁.ctx = σ₂.ctx ∧
+    σ₁.nextChild = σ₂.nextChild ∧ σ₁.parent = σ₂.parent
+
+theorem EqUpToOutbox.refl (σ : AgentState T Role Pay Sid) : EqUpToOutbox σ σ :=
+  ⟨rfl, rfl, rfl, rfl, rfl⟩
+
+theorem EqUpToOutbox.symm {σ₁ σ₂ : AgentState T Role Pay Sid} (h : EqUpToOutbox σ₁ σ₂) :
+    EqUpToOutbox σ₂ σ₁ :=
+  ⟨h.1.symm, h.2.1.symm, h.2.2.1.symm, h.2.2.2.1.symm, h.2.2.2.2.symm⟩
+
+/-- `a` is clean in both runs: same state up to the outbox, same history, session tenant `B`,
+context readable by `B`. -/
+def Clean (cfg : Config T U Ext Role Req Qry Pay Sid) (B : T)
+    (o₁ o₂ : Option (AgentState T Role Pay Sid)) (h₁ h₂ : List (Response Pay)) : Prop :=
+  ∃ σ₁ σ₂, o₁ = some σ₁ ∧ o₂ = some σ₂ ∧ EqUpToOutbox σ₁ σ₂ ∧ readable B σ₁.ctx ∧
+    (∃ p, cfg.sessions σ₁.session = some p ∧ p.tenant = B) ∧ h₁ = h₂
+
+theorem Clean.symm {B : T} {o₁ o₂ : Option (AgentState T Role Pay Sid)} {h₁ h₂}
+    (h : Clean cfg B o₁ o₂ h₁ h₂) : Clean cfg B o₂ o₁ h₂ h₁ := by
+  obtain ⟨σ₁, σ₂, e₁, e₂, he, hr, ⟨p, hp, ht⟩, hh⟩ := h
+  exact ⟨σ₂, σ₁, e₂, e₁, he.symm, he.2.2.1 ▸ hr, ⟨p, he.1 ▸ hp, ht⟩, hh.symm⟩
+
+theorem Clean.not_tainted {B : T} {o₁ o₂ : Option (AgentState T Role Pay Sid)} {h₁ h₂}
+    (h : Clean cfg B o₁ o₂ h₁ h₂) (ht : Tainted B o₁) : False := by
+  obtain ⟨σ₁, σ₂, e₁, e₂, he, hr, hp, hh⟩ := h
+  exact ht _ e₁ hr
+
+theorem Clean.not_tainted' {B : T} {o₁ o₂ : Option (AgentState T Role Pay Sid)} {h₁ h₂}
+    (h : Clean cfg B o₁ o₂ h₁ h₂) (ht : Tainted B o₂) : False :=
+  h.symm.not_tainted ht
+
+theorem Clean.isSome {B : T} {o₁ o₂ : Option (AgentState T Role Pay Sid)} {h₁ h₂}
+    (h : Clean cfg B o₁ o₂ h₁ h₂) : o₁ ≠ none ∧ o₂ ≠ none := by
+  obtain ⟨σ₁, σ₂, e₁, e₂, -⟩ := h
+  exact ⟨by simp [e₁], by simp [e₂]⟩
+
+structure Sim (cfg : Config T U Ext Role Req Qry Pay Sid) (B : T)
+    (rs₁ rs₂ : RunState T Ext Role Pay Sid) : Prop where
+  fresh₁ : Fresh rs₁.state
+  fresh₂ : Fresh rs₂.state
+  index : readableDocs B rs₁.state.index = readableDocs B rs₂.state.index
+  events : obs cfg B rs₁.state.events = obs cfg B rs₂.state.events
+  agents : ∀ a, Clean cfg B (rs₁.state.agents a) (rs₂.state.agents a) (rs₁.hist a) (rs₂.hist a) ∨
+    (Tainted B (rs₁.state.agents a) ∧ Tainted B (rs₂.state.agents a))
+  childEx : ∀ a, Clean cfg B (rs₁.state.agents a) (rs₂.state.agents a) (rs₁.hist a) (rs₂.hist a) →
+    ∀ c, (rs₁.state.agents (childId a c) = none ↔ rs₂.state.agents (childId a c) = none)
+  childOutbox : ∀ a, Clean cfg B (rs₁.state.agents a) (rs₂.state.agents a) (rs₁.hist a) (rs₂.hist a) →
+    ∀ c, Clean cfg B (rs₁.state.agents (childId a c)) (rs₂.state.agents (childId a c))
+      (rs₁.hist (childId a c)) (rs₂.hist (childId a c)) →
+    (rs₁.state.agents (childId a c)).map AgentState.outbox =
+      (rs₂.state.agents (childId a c)).map AgentState.outbox
+
+theorem Sim.symm {B : T} {rs₁ rs₂ : RunState T Ext Role Pay Sid} (h : Sim cfg B rs₁ rs₂) :
+    Sim cfg B rs₂ rs₁ where
+  fresh₁ := h.fresh₂
+  fresh₂ := h.fresh₁
+  index := h.index.symm
+  events := h.events.symm
+  agents := fun a => (h.agents a).elim (fun hc => Or.inl hc.symm) (fun ht => Or.inr ⟨ht.2, ht.1⟩)
+  childEx := fun a hc c => (h.childEx a hc.symm c).symm
+  childOutbox := fun a hc c hcc => (h.childOutbox a hc.symm c hcc.symm).symm
+
+/-- A child of a child of `a` is never `a`, and `childId` is injective in the parent. -/
+theorem childId_eq_childId_iff {a b : AgentId Sid} {m n : Nat} :
+    childId a m = childId b n ↔ a = b ∧ m = n :=
+  ⟨childId_inj, fun ⟨h₁, h₂⟩ => h₁ ▸ h₂ ▸ rfl⟩
+
+/-! ### Generic preservation 1: a step of an absent-or-tainted agent in one run only -/
+
+/-- What a step of absent-or-tainted `a` may do to agent `b` of run 1. -/
+def LeftOK (B : T) (a : AgentId Sid) (s s' : State T Ext Role Pay Sid)
+    (hist hist' : AgentId Sid → List (Response Pay)) (b : AgentId Sid) : Prop :=
+  (s'.agents b = s.agents b ∧ hist' b = hist b) ∨
+  (Tainted B (s.agents b) ∧ Tainted B (s'.agents b) ∧
+    ((s'.agents b = none ↔ s.agents b = none) ∨ ∃ n, b = childId a n)) ∨
+  (hist' b = hist b ∧ (∃ n, b = childId a n) ∧
+    ∃ σ ob, s.agents b = some σ ∧ s'.agents b = some { σ with outbox := ob })
+
+theorem Sim.left {B : T} {rs₁ rs₂ : RunState T Ext Role Pay Sid} (hS : Sim cfg B rs₁ rs₂)
+    {a : AgentId Sid} (hT : Tainted B (rs₁.state.agents a))
+    {s₁' : State T Ext Role Pay Sid} {hist₁' : AgentId Sid → List (Response Pay)}
+    (hF : Fresh s₁')
+    (hI : readableDocs B s₁'.index = readableDocs B rs₁.state.index)
+    (hE : obs cfg B s₁'.events = obs cfg B rs₁.state.events)
+    (hA : ∀ b, LeftOK B a rs₁.state s₁' rs₁.hist hist₁' b) :
+    Sim cfg B ⟨s₁', hist₁'⟩ rs₂ := by
+  -- a clean (after) agent was clean before, with the same `agents` value up to outbox
+  have cleanBefore : ∀ b, Clean cfg B (s₁'.agents b) (rs₂.state.agents b) (hist₁' b) (rs₂.hist b) →
+      Clean cfg B (rs₁.state.agents b) (rs₂.state.agents b) (rs₁.hist b) (rs₂.hist b) ∧ b ≠ a := by
+    intro b hc
+    have hba : b ≠ a := by
+      rintro rfl
+      rcases hA b with ⟨e, h⟩ | ⟨ht, ht', _⟩ | ⟨h, ⟨n, hn⟩, σ, ob, e, e'⟩
+      · exact (e ▸ h ▸ hc).not_tainted hT
+      · exact hc.not_tainted ht'
+      · exact hT σ e (by
+          obtain ⟨σ₁, σ₂, e₁, e₂, he, hr, hp, hh⟩ := hc
+          rw [e'] at e₁; cases e₁; exact hr)
+    refine ⟨?_, hba⟩
+    rcases hA b with ⟨e, h⟩ | ⟨ht, ht', _⟩ | ⟨h, ⟨n, hn⟩, σ, ob, e, e'⟩
+    · exact e ▸ h ▸ hc
+    · exact (hc.not_tainted ht').elim
+    · obtain ⟨σ₁, σ₂, e₁, e₂, he, hr, hp, hh⟩ := hc
+      rw [e'] at e₁; cases e₁
+      exact ⟨σ, σ₂, e, e₂, he, hr, hp, h ▸ hh⟩
+  refine ⟨hF, hS.fresh₂, hI.trans hS.index, hE.trans hS.events, ?_, ?_, ?_⟩
+  · intro b
+    rcases hA b with ⟨e, h⟩ | ⟨ht, ht', _⟩ | ⟨h, ⟨n, hn⟩, σ, ob, e, e'⟩
+    · simp only [e, h]; exact hS.agents b
+    · right
+      refine ⟨ht', ?_⟩
+      rcases hS.agents b with hc | ⟨_, ht₂⟩
+      · exact (hc.not_tainted ht).elim
+      · exact ht₂
+    · rcases hS.agents b with ⟨σ₁, σ₂, e₁, e₂, he, hr, hp, hh⟩ | ⟨ht₁, ht₂⟩
+      · left
+        rw [e] at e₁; cases e₁
+        exact ⟨_, σ₂, e', e₂, he, hr, hp, by show hist₁' b = _; rw [h]; exact hh⟩
+      · right
+        refine ⟨fun τ hτ => ?_, ht₂⟩
+        rw [e'] at hτ; cases hτ
+        exact ht₁ σ e
+  · intro b hc c
+    obtain ⟨hcb, hba⟩ := cleanBefore b hc
+    rcases hA (childId b c) with ⟨e, _⟩ | ⟨_, _, hex | ⟨n, hn⟩⟩ | ⟨_, ⟨n, hn⟩, σ, ob, e, e'⟩
+    · rw [e]; exact hS.childEx b hcb c
+    · rw [hex]; exact hS.childEx b hcb c
+    · exact absurd (childId_inj hn).1 hba
+    · exact absurd (childId_inj hn).1 hba
+  · intro b hc c hcc
+    obtain ⟨hcb, hba⟩ := cleanBefore b hc
+    rcases hA (childId b c) with ⟨e, h⟩ | ⟨_, ht', _⟩ | ⟨_, ⟨n, hn⟩, _⟩
+    · rw [e]; exact hS.childOutbox b hcb c (cleanBefore _ hcc).1
+    · exact (hcc.not_tainted ht').elim
+    · exact absurd (childId_inj hn).1 hba
+
+/-! ### Generic preservation 2: lockstep step of a clean agent -/
+
+/-- What a lockstep step of clean `a` may do to agent `b` in both runs. -/
+def LockOK (cfg : Config T U Ext Role Req Qry Pay Sid) (B : T)
+    (s₁ s₂ s₁' s₂' : State T Ext Role Pay Sid)
+    (hist₁ hist₂ hist₁' hist₂' : AgentId Sid → List (Response Pay)) (b : AgentId Sid) : Prop :=
+  (s₁'.agents b = s₁.agents b ∧ s₂'.agents b = s₂.agents b ∧
+    hist₁' b = hist₁ b ∧ hist₂' b = hist₂ b) ∨
+  (Clean cfg B (s₁'.agents b) (s₂'.agents b) (hist₁' b) (hist₂' b) ∧
+    (Clean cfg B (s₁.agents b) (s₂.agents b) (hist₁ b) (hist₂ b) ∨
+      (s₁.agents b = none ∧ s₂.agents b = none)) ∧
+    ((s₁.agents b).map AgentState.outbox = (s₂.agents b).map AgentState.outbox →
+      (s₁'.agents b).map AgentState.outbox = (s₂'.agents b).map AgentState.outbox)) ∨
+  (Tainted B (s₁'.agents b) ∧ Tainted B (s₂'.agents b) ∧ (s₁'.agents b = none ↔ s₂'.agents b = none))
+
+theorem Sim.lock {B : T} {rs₁ rs₂ : RunState T Ext Role Pay Sid} (hS : Sim cfg B rs₁ rs₂)
+    {s₁' s₂' : State T Ext Role Pay Sid} {hist₁' hist₂' : AgentId Sid → List (Response Pay)}
+    (hF₁ : Fresh s₁') (hF₂ : Fresh s₂')
+    (hI : readableDocs B s₁'.index = readableDocs B s₂'.index)
+    (hE : obs cfg B s₁'.events = obs cfg B s₂'.events)
+    (hA : ∀ b, LockOK cfg B rs₁.state rs₂.state s₁' s₂' rs₁.hist rs₂.hist hist₁' hist₂' b) :
+    Sim cfg B ⟨s₁', hist₁'⟩ ⟨s₂', hist₂'⟩ := by
+  -- a clean (after) agent was clean before or absent before in both runs
+  have cleanBefore : ∀ b, Clean cfg B (s₁'.agents b) (s₂'.agents b) (hist₁' b) (hist₂' b) →
+      Clean cfg B (rs₁.state.agents b) (rs₂.state.agents b) (rs₁.hist b) (rs₂.hist b) ∨
+        (rs₁.state.agents b = none ∧ rs₂.state.agents b = none) := by
+    intro b hc
+    rcases hA b with ⟨e₁, e₂, h₁, h₂⟩ | ⟨_, hb, _⟩ | ⟨ht, _, _⟩
+    · left; exact e₁ ▸ e₂ ▸ h₁ ▸ h₂ ▸ hc
+    · exact hb
+    · exact (hc.not_tainted ht).elim
+  -- children of an agent absent in both runs are absent in both runs
+  have absentChild : ∀ b c, rs₁.state.agents b = none → rs₂.state.agents b = none →
+      rs₁.state.agents (childId b c) = none ∧ rs₂.state.agents (childId b c) = none := by
+    intro b c h₁ h₂
+    constructor
+    · cases h : rs₁.state.agents (childId b c) with
+      | none => rfl
+      | some σ => obtain ⟨σp, hp⟩ := hS.fresh₁.parent b c σ h; rw [h₁] at hp; exact nomatch hp
+    · cases h : rs₂.state.agents (childId b c) with
+      | none => rfl
+      | some σ => obtain ⟨σp, hp⟩ := hS.fresh₂.parent b c σ h; rw [h₂] at hp; exact nomatch hp
+  refine ⟨hF₁, hF₂, hI, hE, ?_, ?_, ?_⟩
+  · intro b
+    rcases hA b with ⟨e₁, e₂, h₁, h₂⟩ | ⟨hc, _, _⟩ | ⟨ht₁, ht₂, _⟩
+    · simp only [e₁, e₂, h₁, h₂]; exact hS.agents b
+    · exact Or.inl hc
+    · exact Or.inr ⟨ht₁, ht₂⟩
+  · intro b hc c
+    rcases hA (childId b c) with ⟨e₁, e₂, _, _⟩ | ⟨hcc, _, _⟩ | ⟨_, _, hex⟩
+    · rw [e₁, e₂]
+      rcases cleanBefore b hc with hcb | ⟨n₁, n₂⟩
+      · exact hS.childEx b hcb c
+      · obtain ⟨a₁, a₂⟩ := absentChild b c n₁ n₂
+        rw [a₁, a₂]
+    · obtain ⟨n₁, n₂⟩ := hcc.isSome
+      exact ⟨fun h => (n₁ h).elim, fun h => (n₂ h).elim⟩
+    · exact hex
+  · intro b hc c hcc
+    rcases hA (childId b c) with ⟨e₁, e₂, h₁, h₂⟩ | ⟨_, hbefore, himp⟩ | ⟨ht, _, _⟩
+    · rw [e₁, e₂]
+      rcases cleanBefore b hc with hcb | ⟨n₁, n₂⟩
+      · exact hS.childOutbox b hcb c (e₁ ▸ e₂ ▸ h₁ ▸ h₂ ▸ hcc)
+      · obtain ⟨a₁, a₂⟩ := absentChild b c n₁ n₂
+        rw [a₁, a₂]
+    · apply himp
+      rcases hbefore with hcc₀ | ⟨n₁, n₂⟩
+      · rcases cleanBefore b hc with hcb | ⟨n₁, n₂⟩
+        · exact hS.childOutbox b hcb c hcc₀
+        · obtain ⟨a₁, a₂⟩ := absentChild b c n₁ n₂
+          exact (hcc₀.isSome.1 a₁).elim
+      · rw [n₁, n₂]
+    · exact (hcc.not_tainted ht).elim
+
+end
+
+section
+variable {T U Ext Role Req Qry Pay Sid : Type} [DecidableEq Sid]
+variable {cfg : Config T U Ext Role Req Qry Pay Sid}
+
+/-! ## §7.4 definitions: the run function -/
+
+/-- The (unique, by `Step.det`) step as a function; exists by `Step.total`. -/
+noncomputable def stepFn (cfg : Config T U Ext Role Req Qry Pay Sid) (D : Data T Ext Pay Sid)
+    (s : State T Ext Role Pay Sid) (a : AgentId Sid) (act : Action Ext Role Pay Qry) :
+    Response Pay × State T Ext Role Pay Sid :=
+  let h := Step.total (cfg := cfg) (D := D) s a act
+  (Classical.choose h, Classical.choose (Classical.choose_spec h))
+
+theorem stepFn_spec (D : Data T Ext Pay Sid) (s : State T Ext Role Pay Sid) (a : AgentId Sid)
+    (act : Action Ext Role Pay Qry) :
+    Step cfg D s a act (stepFn cfg D s a act).1 (stepFn cfg D s a act).2 :=
+  Classical.choose_spec (Classical.choose_spec (Step.total (cfg := cfg) (D := D) s a act))
+
+theorem Step.eq_stepFn {D : Data T Ext Pay Sid} {s s' : State T Ext Role Pay Sid} {a act r}
+    (h : Step cfg D s a act r s') : stepFn cfg D s a act = (r, s') := by
+  obtain ⟨h₁, h₂⟩ := Step.det (stepFn_spec (cfg := cfg) D s a act) h
+  exact Prod.ext h₁ h₂
+
+/-- History update: the acting agent sees its response; a new child's first observation is its task. -/
+def histUpdate (hist : AgentId Sid → List (Response Pay)) (a : AgentId Sid)
+    (act : Action Ext Role Pay Qry) (r : Response Pay) : AgentId Sid → List (Response Pay) :=
+  fun a' =>
+    match act, r with
+    | .delegate _ v, .child n =>
+      if a' = childId a n then [.payload v] else if a' = a then hist a ++ [r] else hist a'
+    | _, _ => if a' = a then hist a ++ [r] else hist a'
+
+/-- One scheduled move: a no-op if the agent does not exist, else the strategy's action is stepped. -/
+noncomputable def runStep (cfg : Config T U Ext Role Req Qry Pay Sid) (D : Data T Ext Pay Sid)
+    (strat : AgentId Sid → Strategy Ext Role Pay Qry) (rs : RunState T Ext Role Pay Sid)
+    (a : AgentId Sid) : RunState T Ext Role Pay Sid :=
+  match rs.state.agents a with
+  | none => rs
+  | some _ =>
+    let act := strat a (rs.hist a)
+    let rs' := stepFn cfg D rs.state a act
+    ⟨rs'.2, histUpdate rs.hist a act rs'.1⟩
+
+noncomputable def runAll (cfg : Config T U Ext Role Req Qry Pay Sid) (D : Data T Ext Pay Sid)
+    (strat : AgentId Sid → Strategy Ext Role Pay Qry) :
+    List (AgentId Sid) → RunState T Ext Role Pay Sid → RunState T Ext Role Pay Sid
+  | [], rs => rs
+  | a :: sched, rs => runAll cfg D strat sched (runStep cfg D strat rs a)
+
+/-- `run cfg strat sched D`: the event list after the whole schedule (§7.4). -/
+noncomputable def run (cfg : Config T U Ext Role Req Qry Pay Sid)
+    (strat : AgentId Sid → Strategy Ext Role Pay Qry) (sched : List (AgentId Sid))
+    (D : Data T Ext Pay Sid) : List (Event T Ext Pay) :=
+  (runAll cfg D strat sched (initRun cfg D)).state.events
+
+
+end
+
+end TenantFlow.Model
