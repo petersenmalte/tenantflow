@@ -15,7 +15,7 @@ Computable counterpart of `TenantFlow.Model`, used by the oracle (S1) and ported
 
 namespace TenantFlow.Exec
 
-open TenantFlow.Model (Integrity Principal ToolId Action)
+open TenantFlow.Model (Integrity Principal ToolId Action AgentId childId)
 
 structure Label (T : Type) where
   owners : List T
@@ -56,10 +56,6 @@ structure Doc (T Pay : Type) where
   label : Label T
   payload : Pay
   deriving DecidableEq, Repr
-
-abbrev AgentId (Sid : Type) := Sid × List Nat
-
-def childId {Sid : Type} (a : AgentId Sid) (n : Nat) : AgentId Sid := (a.1, a.2 ++ [n])
 
 structure AgentState (T Role Pay Sid : Type) where
   session : Sid
@@ -119,11 +115,12 @@ variable {T U Ext Role Req Qry Pay Sid : Type} [DecidableEq T] [DecidableEq Ext]
 
 /-! ### Ranking: stable sort by score (descending), then top-k -/
 
-def insertByScore (sc : Doc T Pay → Nat) (d : Doc T Pay) : List (Doc T Pay) → List (Doc T Pay)
+/-- Generic in the element type so that the model's `rank` can be instantiated with it (§7.5). -/
+def insertByScore {X : Type} (sc : X → Nat) (d : X) : List X → List X
   | [] => [d]
   | e :: es => if sc e ≤ sc d then d :: e :: es else e :: insertByScore sc d es
 
-def sortByScore (sc : Doc T Pay → Nat) : List (Doc T Pay) → List (Doc T Pay)
+def sortByScore {X : Type} (sc : X → Nat) : List X → List X
   | [] => []
   | d :: ds => insertByScore sc d (sortByScore sc ds)
 

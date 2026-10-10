@@ -584,12 +584,8 @@ end TenantFlow.Model
 
 namespace TenantFlow.Exec
 
-section
-variable {T U Ext Role Req Qry Pay Sid : Type} [DecidableEq T] [DecidableEq Ext] [DecidableEq Sid]
-
-omit [DecidableEq T] [DecidableEq Ext] [DecidableEq Sid] in
-theorem mem_insertByScore {sc : Doc T Pay → Nat} {d x : Doc T Pay} :
-    ∀ {l : List (Doc T Pay)}, x ∈ insertByScore sc d l → x = d ∨ x ∈ l
+theorem mem_insertByScore {X : Type} {sc : X → Nat} {d x : X} :
+    ∀ {l : List X}, x ∈ insertByScore sc d l → x = d ∨ x ∈ l
   | [], h => by simpa [insertByScore] using h
   | e :: es, h => by
     unfold insertByScore at h
@@ -601,15 +597,17 @@ theorem mem_insertByScore {sc : Doc T Pay → Nat} {d x : Doc T Pay} :
         · exact Or.inl h
         · exact Or.inr (List.mem_cons_of_mem _ h)
 
-omit [DecidableEq T] [DecidableEq Ext] [DecidableEq Sid] in
-theorem mem_sortByScore {sc : Doc T Pay → Nat} {x : Doc T Pay} :
-    ∀ {l : List (Doc T Pay)}, x ∈ sortByScore sc l → x ∈ l
+theorem mem_sortByScore {X : Type} {sc : X → Nat} {x : X} :
+    ∀ {l : List X}, x ∈ sortByScore sc l → x ∈ l
   | [], h => by simp [sortByScore] at h
   | d :: ds, h => by
     unfold sortByScore at h
     rcases mem_insertByScore h with rfl | h
     · exact List.mem_cons_self ..
     · exact List.mem_cons_of_mem _ (mem_sortByScore h)
+
+section
+variable {T U Ext Role Req Qry Pay Sid : Type} [DecidableEq T] [DecidableEq Ext] [DecidableEq Sid]
 
 omit [DecidableEq T] [DecidableEq Ext] [DecidableEq Sid] in
 /-- A ranking selects, it does not fabricate (§4.1 `rank_mem`, for the executable top-k). -/
@@ -623,7 +621,7 @@ end
 
 namespace Sanity
 
-open TenantFlow.Model (Integrity Principal ToolId Action)
+open TenantFlow.Model (Integrity Principal ToolId Action AgentId)
 
 inductive Ten | bank | insurer
   deriving DecidableEq, Repr
