@@ -18,14 +18,15 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S0 | [SONNET] | – | done | Repository setup |
 | O1 | [OPUS] | S0 | done | Draft the formal spec |
 | F0 | [FABLE] | O1 | done | Adversarial spec review, final theorem statements |
-| S0b | [SONNET] | S0 | open | Lean toolchain for cloud sessions (SessionStart hook / setup script) |
-| F1a | [FABLE] | F0, S0b | open | Lean model + executable monitor + theorem (a) isolation |
-| F1b | [FABLE] | F1a | open | Theorem (b) no label forgery / no laundering |
+| S0b | [SONNET] | S0 | done | Lean toolchain for cloud sessions (SessionStart hook / setup script) |
+| F1a | [FABLE] | F0, S0b | done | Lean model + executable monitor + theorem (a) isolation |
+| F1b | [FABLE] | F1a | done | Theorem (b) no label forgery / no laundering |
 | S1 | [SONNET] | F1a | open | Lean oracle executable |
 | S2 | [SONNET] | F1a | open | Python package: adapter, monitor, Cedar per-call check |
 | S3 | [SONNET] | S1, S2 | open | Differential testing Python ↔ Lean oracle |
-| F2 | [FABLE] | F1b | open | Theorem (c) noninterference for the shared RAG index |
-| F3 | [FABLE] | F2 (or G2 fallback) | open | Theorem (d) refinement: executable monitor implements the model |
+| F2 | [FABLE] | F1b | done | Theorem (c) noninterference for the shared RAG index |
+| F3 | [FABLE] | F2 (or G2 fallback) | done | Theorem (d) refinement: executable monitor implements the model |
+| F4 | [FABLE] | F3, S1 | open (optional) | Lift (c) to `Exec` traces: `Exec.run`, `obs` commutes with `α` – only if budget allows, not needed for the deck |
 | S4 | [SONNET] | S2 | open | Baselines: none, Cedar-only, FIDES middleware |
 | S5 | [SONNET] | S3, S4 | open | Benchmark suites, adversarial fuzzing agent, latency, plots |
 | S6 | [SONNET] | S5 | open | OPTIONAL – small real-LLM utility run (ask user first, costs API money) |
@@ -84,8 +85,16 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 - (b) = (b2) of `docs/spec.md` §7.3 on `GState`: every object's label dominates the join of the registry labels of
   its origins, `ctx` monotone, child `ctx` = parent `ctx` at creation. (b1) only as an `Exec` lemma and only if it
   costs ≤ 1 USD (design rule D8 is the primary guarantee). Budget target: 7–10 USD. **Check G1 afterwards.**
+- Done: `no_launder`, `ctx_mono`, `ctx_mono_ghost`, `child_ctx_eq`, helper invariant `Fresh` (`lean/TenantFlow/Proofs.lean`);
+  (b1) dropped per spec §7.3 cost rule. Axioms in `docs/proof-status.md`.
 
 ### S1 [SONNET] Lean oracle executable
+- Use `TenantFlow.Exec.step`/`Exec.runTrace` (polymorphic in `Pay`; instantiate `Pay := Lean.Json`, `Qry := String`,
+  `Req` as a small request record). `Exec.Config` holds `sessions`/`extReg` as association lists, `score : Qry → Pay → Nat`
+  and `topK`. Owner lists are unsorted sets: sort them when serialising. `Exec.Response.denied` carries a reason string.
+  Sanity examples in `lean/TenantFlow/Proofs.lean` (namespace `Exec.Sanity`) show how to build a config and a trace.
+- Since F3, `Exec` uses the model's `AgentId`/`childId` (`TenantFlow.Model.childId`), and `sortByScore` is generic in the
+  element type; `Exec.step`/`runTrace` are unchanged. The oracle must implement exactly `Exec.step` (theorem (d) covers it).
 - Actions and registry format follow `docs/spec.md` v0.2 §4.1/§4.4 (`call k args` with `observers`, `needsTrusted`,
   `result`; no separate read/send).
 - `lean/Oracle/Main.lean`, `lake exe oracle`: reads a JSON trace (list of actions + initial state) from stdin,
@@ -108,10 +117,20 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 ### F2 [FABLE] Theorem (c) noninterference
 - Statement and low-equivalence as in `docs/spec.md` §7.4; use the simulation relation sketched there, including
   clause (iii) "clean-and-identical or absent-or-tainted". Budget target: 15–20 USD. **Check G2 afterwards.**
+- Done: `Model.noninterference` in `lean/TenantFlow/Proofs/Noninterference.lean` (strategies, schedule, `run`, `LowEq`,
+  `obs`, relation `Sim` with the strengthened clauses (iii)/(iv), see spec changelog "F2 details"); no sorry; axioms in
+  `docs/proof-status.md`. G2: user fills in the spend after this session in `docs/fable-budget.md`.
 
 ### F3 [FABLE] Theorem (d) refinement
 - (d1) forward simulation with denial reasons collapsed by `⌊·⌋`, (d2) initial states agree (`docs/spec.md` §7.5);
   "rejected ⇒ no abstract step" is a corollary of `Step.det`. Budget target: 8–10 USD, hard cap.
+- Done: `lean/TenantFlow/Proofs/Refinement.lean` (`Exec.refines`, `Exec.refines_init`, `Exec.refines_denied`,
+  `Exec.refines_trace`, `Exec.refines_ghost`). See `docs/spec.md` changelog "F3 details".
+
+### F4 [FABLE] (optional) Noninterference for `Exec` traces
+- Define `Exec.run` (the executable counterpart of `Model.run` in `Proofs/Noninterference.lean`, driven by the same
+  `Strategy`/schedule), show `Exec.obs` commutes with `α` and `α (Exec.run …) = Model.run …`; then (c) transfers.
+- Only if the Fable budget allows after S-tasks are green; the deck can cite (d) + (c) on the model without it.
 
 ### S4 [SONNET] Baselines
 - `none` (no protection), `cedar-only`, `fides`: the label middleware of Microsoft Agent Framework (pin a version in
@@ -134,6 +153,9 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 ### S8 [SONNET] CI
 - GitHub Actions: `lake build`, check that `Proofs/` contains no `sorry`, pytest, differential tests (small sample),
   JS tests of the game monitor.
+- The `sorry` check must cover `lean/TenantFlow/Proofs.lean` **and** `lean/TenantFlow/Proofs/**` (F2 added
+  `Proofs/Noninterference.lean`). Also run `#print axioms` for the theorems listed in `docs/proof-status.md` and fail on
+  anything but `propext`, `Classical.choice`, `Quot.sound`.
 
 ### S9 [SONNET] Quarto slide deck
 - Style reference: https://ai.katestange.net/ai/course/llm-course/slides/from-tokens-to-transformers/
