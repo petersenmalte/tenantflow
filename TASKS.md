@@ -20,7 +20,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | F0 | [FABLE] | O1 | done | Adversarial spec review, final theorem statements |
 | S0b | [SONNET] | S0 | done | Lean toolchain for cloud sessions (SessionStart hook / setup script) |
 | F1a | [FABLE] | F0, S0b | done | Lean model + executable monitor + theorem (a) isolation |
-| F1b | [FABLE] | F1a | open | Theorem (b) no label forgery / no laundering |
+| F1b | [FABLE] | F1a | done | Theorem (b) no label forgery / no laundering |
 | S1 | [SONNET] | F1a | open | Lean oracle executable |
 | S2 | [SONNET] | F1a | open | Python package: adapter, monitor, Cedar per-call check |
 | S3 | [SONNET] | S1, S2 | open | Differential testing Python ↔ Lean oracle |
@@ -84,6 +84,8 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 - (b) = (b2) of `docs/spec.md` §7.3 on `GState`: every object's label dominates the join of the registry labels of
   its origins, `ctx` monotone, child `ctx` = parent `ctx` at creation. (b1) only as an `Exec` lemma and only if it
   costs ≤ 1 USD (design rule D8 is the primary guarantee). Budget target: 7–10 USD. **Check G1 afterwards.**
+- Done: `no_launder`, `ctx_mono`, `ctx_mono_ghost`, `child_ctx_eq`, helper invariant `Fresh` (`lean/TenantFlow/Proofs.lean`);
+  (b1) dropped per spec §7.3 cost rule. Axioms in `docs/proof-status.md`.
 
 ### S1 [SONNET] Lean oracle executable
 - Use `TenantFlow.Exec.step`/`Exec.runTrace` (polymorphic in `Pay`; instantiate `Pay := Lean.Json`, `Qry := String`,

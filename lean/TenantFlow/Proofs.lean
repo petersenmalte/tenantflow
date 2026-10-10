@@ -8,6 +8,8 @@ import TenantFlow.Exec
 * `Inv`: label soundness of the ghost provenance (the (b2) inequality for agents, docs,
   events and outbox entries) plus the monitor's own check on every event; preserved by `GStep`.
 * Theorem (a) `isolation` and (a-int) `isolation_int` (§7.2).
+* Theorem (b) `no_launder` (b2), `ctx_mono`/`ctx_mono_ghost`, `child_ctx_eq` (§7.3), with the
+  freshness invariant `Fresh` for child ids.
 * `Exec.rank_mem` for the executable top-k (§6) and the sanity examples of §7.7.
 -/
 
@@ -305,6 +307,276 @@ theorem isolation_int {g : GState T Ext Role Pay Sid} (h : GReachable cfg D (gin
   have h1 := (hI.events e o ho).2
   rw [(hI.checked e he).2 hn] at h1
   exact Integrity.le_trusted h1
+
+/-! ## Theorem (b) No forgery, no laundering (§7.3) -/
+
+/-- **(b2) No laundering.** For every reachable ghost state and every object (agent context,
+index doc, event, outbox entry with the child's `ctx` at report time), the join of the trusted
+registry labels `label₀` of the object's origins is dominated by the object's label.  The join
+of the set `{label₀ o | o ∈ deps x}` is stated pointwise (`⨆ S ⊑ ℓ ↔ ∀ l ∈ S, l ⊑ ℓ`). -/
+theorem no_launder {g : GState T Ext Role Pay Sid} (h : GReachable cfg D (ginit cfg D) g) :
+    (∀ a σ, g.base.agents a = some σ → ∀ o, g.ghost.agent a o → label₀ cfg D o ≤ σ.ctx) ∧
+    (∀ d o, g.ghost.doc d o → label₀ cfg D o ≤ d.label) ∧
+    (∀ e o, g.ghost.event e o → label₀ cfg D o ≤ e.label) ∧
+    (∀ a x, x ∈ g.ghost.outbox a → ∀ o, x.1 o → label₀ cfg D o ≤ x.2) :=
+  let hI := Inv.reachable h
+  ⟨hI.agents, hI.docs, hI.events, hI.outbox⟩
+
+omit [DecidableEq Sid] in
+theorem childId_inj {a b : AgentId Sid} {m n : Nat} (h : childId a m = childId b n) :
+    a = b ∧ m = n := by
+  obtain ⟨sa, la⟩ := a
+  obtain ⟨sb, lb⟩ := b
+  simp only [childId, Prod.mk.injEq] at h
+  obtain ⟨h1, h2⟩ := h
+  obtain ⟨h3, h4⟩ := List.append_inj' h2 rfl
+  simp_all
+
+omit [DecidableEq Sid] in
+theorem ne_childId (a : AgentId Sid) (c : Nat) : a ≠ childId a c := fun h => childId_ne a c h.symm
+
+omit [DecidableEq Sid] in
+theorem childId_childId_ne (a : AgentId Sid) (m n : Nat) : childId (childId a m) n ≠ a := by
+  intro h
+  have := congrArg (fun x : AgentId Sid => x.2.length) h
+  simp [childId] at this
+
+/-- Child ids are fresh: an agent's children numbered `≥ nextChild` do not exist, and an agent
+exists only if its parent does.  Needed so that `delegate` never overwrites an existing agent. -/
+structure Fresh (s : State T Ext Role Pay Sid) : Prop where
+  next : ∀ a σ, s.agents a = some σ → ∀ m, σ.nextChild ≤ m → s.agents (childId a m) = none
+  parent : ∀ a m σ, s.agents (childId a m) = some σ → ∃ σp, s.agents a = some σp
+
+omit [DecidableEq Sid] in
+theorem Fresh.init : Fresh (init cfg D) where
+  next := by
+    intro ⟨sid, l⟩ _ _ m _
+    cases l <;> rfl
+  parent := by
+    intro ⟨sid, l⟩ m _ h
+    cases l <;> exact nomatch h
+
+/-- Updating an existing agent without changing `nextChild` preserves freshness. -/
+theorem Fresh.setAgent {s : State T Ext Role Pay Sid} (hF : Fresh s) {a σ σ'}
+    (hσ : s.agents a = some σ) (hn : σ'.nextChild = σ.nextChild) : Fresh (s.setAgent a σ') where
+  next := by
+    intro b τ hb m hm
+    simp only [State.setAgent_agents] at hb ⊢
+    by_cases hba : b = a
+    · subst hba
+      simp only [ite_true, Option.some.injEq] at hb
+      subst hb
+      rw [hn] at hm
+      simp [childId_ne, hF.next b σ hσ m hm]
+    · simp only [hba, ite_false] at hb
+      have hnone := hF.next b τ hb m hm
+      by_cases hc : childId b m = a
+      · rw [hc, hσ] at hnone
+        exact nomatch hnone
+      · simp [hc, hnone]
+  parent := by
+    intro b m τ hb
+    simp only [State.setAgent_agents] at hb ⊢
+    by_cases hc : childId b m = a
+    · have hba : b ≠ a := fun h => childId_ne b m (h ▸ hc)
+      have hp := hF.parent b m σ (hc ▸ hσ)
+      simpa [hba] using hp
+    · simp only [hc, ite_false] at hb
+      obtain ⟨σp, hp⟩ := hF.parent b m τ hb
+      by_cases hba : b = a
+      · exact ⟨σ', by simp [hba]⟩
+      · exact ⟨σp, by simp [hba, hp]⟩
+
+/-- `delegate` preserves freshness: the new child `childId a σ.nextChild` did not exist. -/
+theorem Fresh.delegate {s : State T Ext Role Pay Sid} (hF : Fresh s) {a σ}
+    (hσ : s.agents a = some σ) (σc : AgentState T Role Pay Sid) :
+    Fresh ((s.setAgent a { σ with nextChild := σ.nextChild + 1 }).setAgent
+      (childId a σ.nextChild) σc) where
+  next := by
+    intro b τ hb m hm
+    simp only [State.setAgent_agents] at hb ⊢
+    by_cases hbc : b = childId a σ.nextChild
+    · subst hbc
+      simp only [ite_true, Option.some.injEq] at hb
+      subst hb
+      have h1 := childId_ne (childId a σ.nextChild) m
+      have h2 := childId_childId_ne a σ.nextChild m
+      simp only [h1, h2, ite_false]
+      cases hx : s.agents (childId (childId a σ.nextChild) m) with
+      | none => rfl
+      | some τ' =>
+        obtain ⟨σp, hp⟩ := hF.parent _ _ _ hx
+        rw [hF.next a σ hσ _ (Nat.le_refl _)] at hp
+        exact nomatch hp
+    · simp only [hbc, ite_false] at hb
+      by_cases hba : b = a
+      · subst hba
+        simp only [ite_true, Option.some.injEq] at hb
+        subst hb
+        simp only at hm
+        have h1 : childId b m ≠ childId b σ.nextChild := fun h =>
+          absurd (childId_inj h).2 (by omega)
+        simp [h1, childId_ne, hF.next b σ hσ m (by omega)]
+      · simp only [hba, ite_false] at hb
+        have hnone := hF.next b τ hb m hm
+        have h1 : childId b m ≠ childId a σ.nextChild := fun h => hba (childId_inj h).1
+        have h2 : childId b m ≠ a := fun h => by rw [h, hσ] at hnone; exact nomatch hnone
+        simp [h1, h2, hnone]
+  parent := by
+    intro b m τ hb
+    simp only [State.setAgent_agents] at hb ⊢
+    by_cases hbc : childId b m = childId a σ.nextChild
+    · obtain ⟨rfl, rfl⟩ := childId_inj hbc
+      simp only [ne_childId, ite_false]
+      exact ⟨_, rfl⟩
+    · simp only [hbc, ite_false] at hb
+      have hex : ∃ σp, s.agents b = some σp := by
+        by_cases hba : childId b m = a
+        · simp only [hba, ite_true, Option.some.injEq] at hb
+          exact hF.parent b m σ (hba ▸ hσ)
+        · simp only [hba, ite_false] at hb
+          exact hF.parent b m τ hb
+      obtain ⟨σp, hp⟩ := hex
+      by_cases h1 : b = childId a σ.nextChild
+      · exact ⟨σc, by simp [h1]⟩
+      · by_cases h2 : b = a
+        · subst h2
+          simp only [ne_childId, ite_false]
+          exact ⟨_, rfl⟩
+        · exact ⟨σp, by simp [h1, h2, hp]⟩
+
+theorem Fresh.step {s s' : State T Ext Role Pay Sid} {a act r} (hF : Fresh s)
+    (h : Step cfg D s a act r s') : Fresh s' := by
+  cases h with
+  | denied _ => exact hF
+  | allowed hal =>
+    cases hal with
+    | @call σ p k v i hσ hp hauth hi hobs hint =>
+      have := hF.setAgent hσ (σ' := { σ with ctx := i.joinResult σ.ctx }) rfl
+      exact ⟨this.next, this.parent⟩
+    | @query σ p q hσ hp hauth => exact hF.setAgent hσ rfl
+    | @write σ p v hσ hp hauth hown => exact ⟨hF.next, hF.parent⟩
+    | @delegate σ p ρ v hσ hp hauth => exact hF.delegate hσ _
+    | @report σ p v hσ hp hpar => exact hF.setAgent hσ rfl
+    | @receive σ p c σc hσ hp hc =>
+      have h1 := hF.setAgent hσ (σ' := { σ with ctx := σ.ctx.join σc.ctx }) rfl
+      have hc' : (s.setAgent a { σ with ctx := σ.ctx.join σc.ctx }).agents (childId a c) = some σc := by
+        simp [childId_ne, hc]
+      exact h1.setAgent hc' rfl
+
+theorem Reachable.fresh {s s' : State T Ext Role Pay Sid} (h : Reachable cfg D s s') (hF : Fresh s) :
+    Fresh s' := by
+  induction h with
+  | refl => exact hF
+  | step _ hs ih => exact ih.step hs
+
+/-- One step never lowers any agent's `ctx` (and never removes an agent). -/
+theorem Step.ctx_mono {s s' : State T Ext Role Pay Sid} {a act r} (hF : Fresh s)
+    (h : Step cfg D s a act r s') :
+    ∀ b σ, s.agents b = some σ → ∃ σ', s'.agents b = some σ' ∧ σ.ctx ≤ σ'.ctx := by
+  intro b σ hb
+  cases h with
+  | denied _ => exact ⟨σ, hb, Label.le_refl _⟩
+  | allowed hal =>
+    cases hal with
+    | @call σa p k v i hσ hp hauth hi hobs hint =>
+      by_cases hba : b = a
+      · subst hba
+        rw [hσ] at hb
+        cases hb
+        simp only [State.setAgent_agents, ite_true]
+        refine ⟨_, rfl, ?_⟩
+        unfold ToolInfo.joinResult
+        cases i.result
+        · exact Label.le_refl _
+        · exact Label.le_join_left _ _
+      · exact ⟨σ, by simp [hba, hb], Label.le_refl _⟩
+    | @query σa p q hσ hp hauth =>
+      by_cases hba : b = a
+      · subst hba
+        rw [hσ] at hb
+        cases hb
+        simp only [State.setAgent_agents, ite_true]
+        exact ⟨_, rfl, Label.le_join_left _ _⟩
+      · exact ⟨σ, by simp [hba, hb], Label.le_refl _⟩
+    | @write σa p v hσ hp hauth hown => exact ⟨σ, hb, Label.le_refl _⟩
+    | @delegate σa p ρ v hσ hp hauth =>
+      have hbc : b ≠ childId a σa.nextChild := by
+        intro hbc
+        rw [hbc, hF.next a σa hσ _ (Nat.le_refl _)] at hb
+        exact nomatch hb
+      by_cases hba : b = a
+      · subst hba
+        rw [hσ] at hb
+        cases hb
+        simp only [State.setAgent_agents, hbc, ite_true, ite_false]
+        exact ⟨_, rfl, Label.le_refl _⟩
+      · exact ⟨σ, by simp [hbc, hba, hb], Label.le_refl _⟩
+    | @report σa p v hσ hp hpar =>
+      by_cases hba : b = a
+      · subst hba
+        rw [hσ] at hb
+        cases hb
+        simp only [State.setAgent_agents, ite_true]
+        exact ⟨_, rfl, Label.le_refl _⟩
+      · exact ⟨σ, by simp [hba, hb], Label.le_refl _⟩
+    | @receive σa p c σc hσ hp hc =>
+      by_cases hbc : b = childId a c
+      · subst hbc
+        rw [hc] at hb
+        cases hb
+        simp only [State.setAgent_agents, ite_true]
+        exact ⟨_, rfl, Label.le_refl _⟩
+      · by_cases hba : b = a
+        · subst hba
+          rw [hσ] at hb
+          cases hb
+          simp only [State.setAgent_agents, hbc, ite_true, ite_false]
+          exact ⟨_, rfl, Label.le_join_left _ _⟩
+        · exact ⟨σ, by simp [hbc, hba, hb], Label.le_refl _⟩
+
+theorem Reachable.ctx_mono {s s' : State T Ext Role Pay Sid} (h : Reachable cfg D s s')
+    (hF : Fresh s) :
+    ∀ b σ, s.agents b = some σ → ∃ σ', s'.agents b = some σ' ∧ σ.ctx ≤ σ'.ctx := by
+  induction h with
+  | refl => exact fun b σ hb => ⟨σ, hb, Label.le_refl _⟩
+  | step hr hs ih =>
+    intro b σ hb
+    obtain ⟨σ₁, h₁, hle₁⟩ := ih b σ hb
+    obtain ⟨σ₂, h₂, hle₂⟩ := Step.ctx_mono (hr.fresh hF) hs b σ₁ h₁
+    exact ⟨σ₂, h₂, Label.le_trans hle₁ hle₂⟩
+
+/-- **(b) `ctx` is monotone along every trace**: for every agent that exists in a reachable state
+`s`, in every state reachable from `s` the agent still exists and its `ctx` has not decreased. -/
+theorem ctx_mono {s s' : State T Ext Role Pay Sid} (h₀ : Reachable cfg D (init cfg D) s)
+    (h : Reachable cfg D s s') :
+    ∀ b σ, s.agents b = some σ → ∃ σ', s'.agents b = some σ' ∧ σ.ctx ≤ σ'.ctx :=
+  Reachable.ctx_mono h (h₀.fresh Fresh.init)
+
+theorem GReachable.base {g g' : GState T Ext Role Pay Sid} (h : GReachable cfg D g g') :
+    Reachable cfg D g.base g'.base := by
+  induction h with
+  | refl => exact .refl
+  | step _ hs ih => exact .step ih (ghost_proj hs)
+
+/-- `ctx_mono` on ghost states. -/
+theorem ctx_mono_ghost {g g' : GState T Ext Role Pay Sid} (h₀ : GReachable cfg D (ginit cfg D) g)
+    (h : GReachable cfg D g g') :
+    ∀ b σ, g.base.agents b = some σ → ∃ σ', g'.base.agents b = some σ' ∧ σ.ctx ≤ σ'.ctx :=
+  ctx_mono h₀.base h.base
+
+/-- **(b) A child's `ctx` at creation equals its parent's**: an allowed `delegate` by `a` with
+current state `σ` creates `childId a σ.nextChild` with `ctx = σ.ctx` (same session, the requested
+Cedar role, no children, empty outbox, parent `a`). -/
+theorem child_ctx_eq {s s' : State T Ext Role Pay Sid} {a ρ v r}
+    (h : Step cfg D s a (.delegate ρ v) r s') (hr : r ≠ .denied) :
+    ∃ σ n, s.agents a = some σ ∧ r = .child n ∧
+      s'.agents (childId a n) = some ⟨σ.session, ρ, σ.ctx, 0, [], some a⟩ := by
+  cases h with
+  | denied _ => exact absurd rfl hr
+  | allowed hal =>
+    cases hal with
+    | @delegate σ p ρ v hσ hp hauth => exact ⟨σ, σ.nextChild, hσ, rfl, by simp⟩
 
 end
 
