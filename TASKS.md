@@ -27,7 +27,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | F2 | [FABLE] | F1b | done | Theorem (c) noninterference for the shared RAG index |
 | F3 | [FABLE] | F2 (or G2 fallback) | done | Theorem (d) refinement: executable monitor implements the model |
 | F4 | [FABLE] | F3, S1 | open (optional) | Lift (c) to `Exec` traces: `Exec.run`, `obs` commutes with `α` – only if budget allows, not needed for the deck |
-| S4 | [SONNET] | S2 | open | Baselines: none, Cedar-only, FIDES middleware |
+| S4 | [SONNET] | S2 | done | Baselines: none, Cedar-only, FIDES middleware |
 | S5 | [SONNET] | S3, S4 | open | Benchmark suites, adversarial fuzzing agent, latency, plots |
 | S6 | [SONNET] | S5 | open | OPTIONAL – small real-LLM utility run (ask user first, costs API money) |
 | S7 | [SONNET] | S3 | open | CLI `tenantflow check` (CI mode with counterexamples) |
@@ -183,3 +183,9 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
   unknown agents/tools) → Python `run_scenario` vs. `lake exe oracle`; skipped if the oracle binary is not built
   (`TF_ORACLE` overrides the path, `TF_EXAMPLES` the number of examples, default 300).
 - One finding, D1 (duplicate session ids), is an input precondition: see `docs/discrepancies.md`. No `[FABLE]` task.
+
+### S4 – done (notes)
+- `python/src/tenantflow/baselines.py` (`Baseline.from_monitor(mode, monitor)`, modes `none|cedar-only|fides`), tests in
+  `python/tests/test_baselines.py`, rationale and limits in `bench/README.md`.
+- FIDES is a re-implementation of the label logic of `agent-framework-core==1.5.0` (optional extra `fides`), because the
+  middleware needs a full agent runtime and 1.21.0 is hardened. The APIsec article was not fetchable (403).
