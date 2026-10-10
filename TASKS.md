@@ -19,7 +19,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | O1 | [OPUS] | S0 | done | Draft the formal spec |
 | F0 | [FABLE] | O1 | done | Adversarial spec review, final theorem statements |
 | S0b | [SONNET] | S0 | done | Lean toolchain for cloud sessions (SessionStart hook / setup script) |
-| F1a | [FABLE] | F0, S0b | open | Lean model + executable monitor + theorem (a) isolation |
+| F1a | [FABLE] | F0, S0b | done | Lean model + executable monitor + theorem (a) isolation |
 | F1b | [FABLE] | F1a | open | Theorem (b) no label forgery / no laundering |
 | S1 | [SONNET] | F1a | open | Lean oracle executable |
 | S2 | [SONNET] | F1a | open | Python package: adapter, monitor, Cedar per-call check |
@@ -86,6 +86,10 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
   costs ≤ 1 USD (design rule D8 is the primary guarantee). Budget target: 7–10 USD. **Check G1 afterwards.**
 
 ### S1 [SONNET] Lean oracle executable
+- Use `TenantFlow.Exec.step`/`Exec.runTrace` (polymorphic in `Pay`; instantiate `Pay := Lean.Json`, `Qry := String`,
+  `Req` as a small request record). `Exec.Config` holds `sessions`/`extReg` as association lists, `score : Qry → Pay → Nat`
+  and `topK`. Owner lists are unsorted sets: sort them when serialising. `Exec.Response.denied` carries a reason string.
+  Sanity examples in `lean/TenantFlow/Proofs.lean` (namespace `Exec.Sanity`) show how to build a config and a trace.
 - Actions and registry format follow `docs/spec.md` v0.2 §4.1/§4.4 (`call k args` with `observers`, `needsTrusted`,
   `result`; no separate read/send).
 - `lean/Oracle/Main.lean`, `lake exe oracle`: reads a JSON trace (list of actions + initial state) from stdin,

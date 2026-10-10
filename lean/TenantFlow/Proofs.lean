@@ -74,6 +74,7 @@ theorem label₀_promptO {s : Sid} {p : Principal T U} (h : cfg.sessions s = som
     label₀ cfg D (.promptO s) = rootCtx p.tenant := by
   simp [label₀, h]
 
+omit [DecidableEq Sid] in
 theorem Inv.init : Inv cfg D (ginit cfg D) where
   agents := by
     intro ⟨sid, l⟩ σ hσ o ⟨hl, ho⟩

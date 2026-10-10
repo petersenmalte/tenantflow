@@ -7,4 +7,5 @@ The user fills in "spent after" at the end of every Fable session (cost shown by
 
 | Date | Task | Spent before (USD) | Spent after (USD) | Result / note |
 |---|---|---|---|---|
-| 2026-10-10 | F0 | 0.00 | (fill in) | spec v0.2 + `docs/spec-review.md`; no Lean (toolchain missing in cloud session → S0b) |
+| 2026-10-10 | F0 | 0.00 | 6.00 | spec v0.2 + `docs/spec-review.md`; no Lean (toolchain missing in cloud session → S0b) |
+| 2026-10-10 | F1a | 6.00 | (fill in) | model, exec monitor, Step.det/total, ghost layer, (a) + (a-int), rank_mem, sanity 1–7; no sorry |
