@@ -23,7 +23,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | F1b | [FABLE] | F1a | done | Theorem (b) no label forgery / no laundering |
 | S1 | [SONNET] | F1a | done | Lean oracle executable |
 | S2 | [SONNET] | F1a | done | Python package: adapter, monitor, Cedar per-call check |
-| S3 | [SONNET] | S1, S2 | open | Differential testing Python ↔ Lean oracle |
+| S3 | [SONNET] | S1, S2 | done | Differential testing Python ↔ Lean oracle |
 | F2 | [FABLE] | F1b | done | Theorem (c) noninterference for the shared RAG index |
 | F3 | [FABLE] | F2 (or G2 fallback) | done | Theorem (d) refinement: executable monitor implements the model |
 | F4 | [FABLE] | F3, S1 | open (optional) | Lift (c) to `Exec` traces: `Exec.run`, `obs` commutes with `α` – only if budget allows, not needed for the deck |
@@ -177,3 +177,9 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 - `monitor.run_scenario` reads/writes the oracle JSON; matches all 5 hand traces in `lean/Oracle/tests/` (kind/denied/ctx/final).
 - Cedar via `cedarpy`; hand-written schema (cedar-for-agents generator not used, documented in `cedar.py`).
 - Gateway is a minimal JSON-RPC (`tools/list`, `tools/call`) proxy, no MCP SDK dependency.
+
+### S3 – done (notes)
+- `python/tests/test_differential.py`: Hypothesis scenarios (2–3 tenants, ext tools, Cedar allow-lists, delegation trees,
+  unknown agents/tools) → Python `run_scenario` vs. `lake exe oracle`; skipped if the oracle binary is not built
+  (`TF_ORACLE` overrides the path, `TF_EXAMPLES` the number of examples, default 300).
+- One finding, D1 (duplicate session ids), is an input precondition: see `docs/discrepancies.md`. No `[FABLE]` task.

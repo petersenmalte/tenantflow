@@ -298,8 +298,10 @@ def parse_agent(j: dict[str, Any]) -> AgentId:
 def monitor_from_scenario(sc: dict[str, Any], authorize: Authorizer | None = None) -> Monitor:
     sessions: dict[str, tuple[str, str, str]] = {}
     for s in sc["sessions"]:
-        # Lean `assocFind` takes the first entry for a duplicate session id.
-        sessions.setdefault(s["sid"], (s["tenant"], s["user"], s.get("role") or "default"))
+        # Precondition (docs/discrepancies.md D1): Lean `init` would create one agent per entry.
+        if s["sid"] in sessions:
+            raise ValueError(f"duplicate session id '{s['sid']}'")
+        sessions[s["sid"]] = (s["tenant"], s["user"], s.get("role") or "default")
     tools: dict[str, ToolInfo] = {}
     for k, v in (sc.get("tools") or {}).items():
         res = v.get("result")
