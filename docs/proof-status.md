@@ -21,6 +21,10 @@ Allowed: `propext`, `Classical.choice`, `Quot.sound`.
 | `Model.noninterference` (c: `LowEq cfg B D₁ D₂ → obs cfg B (run cfg strat sched D₁) = obs cfg B (run cfg strat sched D₂)`) | (c) §7.4 | proven (F2), `lean/TenantFlow/Proofs/Noninterference.lean` | propext, Classical.choice, Quot.sound |
 | `Model.Sim.left`, `Model.Sim.lock`, `Model.Step.leftOK`, `Model.Step.lockOK`, `Model.Sim.of_lowEq_init` (simulation relation `Sim`, its preservation, initial states) | §7.4 proof shape | proven (F2) | propext, Classical.choice, Quot.sound |
 | `Model.stepFn`, `Model.run` (step function via `Step.total`/`Classical.choose`; `Step.eq_stepFn` by `Step.det`) | §7.4 definitions | defined (F2), noncomputable | – |
-| (d1) `refines`, (d2) `refines_init` | §7.5 | open (F3) | – |
+| `Exec.refines` (d1: `step cfg D s a act = (r, s') → Model.Step (α cfg) (α D) (α s) a act ⌊r⌋ (α s')`) | (d) §7.5 | proven (F3), `lean/TenantFlow/Proofs/Refinement.lean` | propext, Classical.choice, Quot.sound |
+| `Exec.refines_init` (d2: `α (init cfg D) = Model.init (α cfg) (α D)`) | (d) §7.5 | proven (F3) | propext, Quot.sound |
+| `Exec.refines_denied` (denied ⇒ `Exec` state unchanged ∧ no allowed model step), `Exec.refines_trace`, `Exec.refines_ghost` (`runTrace` states abstract to `Reachable`/`GReachable` model states), `Model.Reachable.ghost`, `Model.Step.not_allowed_of_denied` | §7.5 corollaries | proven (F3) | propext, Classical.choice, Quot.sound |
+| `Exec.rank_abs`, `Exec.readableDocs_abs`, `Exec.Label.abs_join`/`abs_joinAll`, `Exec.State.abs_setAgent`, `Exec.toolInfo_abs` (`α` commutes with ranking, the readable filter, label joins, agent updates, the registry) | §7.5 proof shape | proven (F3) | propext / propext, Classical.choice, Quot.sound |
+| (c) for `Exec` traces (`Exec.run` ↦ `Model.run`, `obs` commutes with `α`) | §7.5 corollary | open (optional F4; `Exec.run` not defined) | – |
 
 Checked on 2026-10-10 with `#print axioms` after `lake build` (no `sorry`, no `admit`, no new `axiom` in `lean/`).

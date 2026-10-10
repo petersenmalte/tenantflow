@@ -25,7 +25,8 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S2 | [SONNET] | F1a | open | Python package: adapter, monitor, Cedar per-call check |
 | S3 | [SONNET] | S1, S2 | open | Differential testing Python ↔ Lean oracle |
 | F2 | [FABLE] | F1b | done | Theorem (c) noninterference for the shared RAG index |
-| F3 | [FABLE] | F2 (or G2 fallback) | open | Theorem (d) refinement: executable monitor implements the model |
+| F3 | [FABLE] | F2 (or G2 fallback) | done | Theorem (d) refinement: executable monitor implements the model |
+| F4 | [FABLE] | F3, S1 | open (optional) | Lift (c) to `Exec` traces: `Exec.run`, `obs` commutes with `α` – only if budget allows, not needed for the deck |
 | S4 | [SONNET] | S2 | open | Baselines: none, Cedar-only, FIDES middleware |
 | S5 | [SONNET] | S3, S4 | open | Benchmark suites, adversarial fuzzing agent, latency, plots |
 | S6 | [SONNET] | S5 | open | OPTIONAL – small real-LLM utility run (ask user first, costs API money) |
@@ -92,6 +93,8 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
   `Req` as a small request record). `Exec.Config` holds `sessions`/`extReg` as association lists, `score : Qry → Pay → Nat`
   and `topK`. Owner lists are unsorted sets: sort them when serialising. `Exec.Response.denied` carries a reason string.
   Sanity examples in `lean/TenantFlow/Proofs.lean` (namespace `Exec.Sanity`) show how to build a config and a trace.
+- Since F3, `Exec` uses the model's `AgentId`/`childId` (`TenantFlow.Model.childId`), and `sortByScore` is generic in the
+  element type; `Exec.step`/`runTrace` are unchanged. The oracle must implement exactly `Exec.step` (theorem (d) covers it).
 - Actions and registry format follow `docs/spec.md` v0.2 §4.1/§4.4 (`call k args` with `observers`, `needsTrusted`,
   `result`; no separate read/send).
 - `lean/Oracle/Main.lean`, `lake exe oracle`: reads a JSON trace (list of actions + initial state) from stdin,
@@ -121,6 +124,13 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 ### F3 [FABLE] Theorem (d) refinement
 - (d1) forward simulation with denial reasons collapsed by `⌊·⌋`, (d2) initial states agree (`docs/spec.md` §7.5);
   "rejected ⇒ no abstract step" is a corollary of `Step.det`. Budget target: 8–10 USD, hard cap.
+- Done: `lean/TenantFlow/Proofs/Refinement.lean` (`Exec.refines`, `Exec.refines_init`, `Exec.refines_denied`,
+  `Exec.refines_trace`, `Exec.refines_ghost`). See `docs/spec.md` changelog "F3 details".
+
+### F4 [FABLE] (optional) Noninterference for `Exec` traces
+- Define `Exec.run` (the executable counterpart of `Model.run` in `Proofs/Noninterference.lean`, driven by the same
+  `Strategy`/schedule), show `Exec.obs` commutes with `α` and `α (Exec.run …) = Model.run …`; then (c) transfers.
+- Only if the Fable budget allows after S-tasks are green; the deck can cite (d) + (c) on the model without it.
 
 ### S4 [SONNET] Baselines
 - `none` (no protection), `cedar-only`, `fides`: the label middleware of Microsoft Agent Framework (pin a version in
