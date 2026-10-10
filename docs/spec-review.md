@@ -130,5 +130,6 @@ budget remains.
 - F3: (d1) + (d2) with `⌊·⌋`.
 - S1/S2: JSON actions follow §4.4; registry format follows §4.1 (`observers`, `needsTrusted`, `result`).
 - G1 fallback updated: drop delegation (`delegate`/`report`/`receive`) and restrict (b2) to index docs and events.
-- New SONNET task S0b: Lean toolchain is not installed in cloud sessions (`lake` missing); a SessionStart hook or
-  setup script is needed before F1a can build.
+- No Lean code was written in F0: the first container of the session had no toolchain (the repo's SessionStart
+  hook `.claude/hooks/session-start.sh` had not run); after a restart it installed Lean 4.34.1 and `lake build`
+  passed. No new task needed.

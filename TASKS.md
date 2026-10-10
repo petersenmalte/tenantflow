@@ -65,12 +65,6 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 - Write `docs/spec-review.md` (findings, decisions). Optional: Lean signatures with `sorry`, only if cheap.
 - Budget target: 3–5 USD.
 
-### S0b [SONNET] Lean toolchain for cloud sessions
-- In the F0 cloud session `lake`/`elan` were not installed, so `lake build` cannot run. Add a SessionStart hook
-  (skill `session-start-hook`) or setup script that installs elan and the toolchain pinned in `lean/lean-toolchain`
-  (v4.34.1) and runs `lake build` once so the cache is warm. Verify `cd lean && lake build` passes in a fresh session.
-- Do not touch `Model/`, `Exec/`, `Proofs/`.
-
 ### F1a [FABLE] Lean model + executable monitor + theorem (a)
 - Follow `docs/spec.md` v0.2 exactly: six actions (`call, query, write, delegate, report, receive`), tool registry
   `(observers, needsTrusted, result)`, `rank_mem`, `GState` ghost layer with `ghost_proj`/`ghost_lift`,
