@@ -114,6 +114,23 @@ theorem obs_singleton_of_not {B : T} {e : Event T Ext Pay} (h : ¬ cfg.observers
   unfold obs; simp [h]
 
 
+theorem callResp_ne_child (D : Data T Ext Pay Sid) (k : ToolId Ext) (i : ToolInfo T) (v : Pay) (n : Nat) :
+    callResp D k i v ≠ .child n := by
+  unfold callResp; split <;> simp
+
+theorem Tainted.of_not_readable {B : T} {σ : AgentState T Role Pay Sid} (h : ¬ readable B σ.ctx) :
+    Tainted B (some σ) :=
+  fun τ hτ => by cases hτ; exact h
+
+theorem Tainted.not_readable {B : T} {σ : AgentState T Role Pay Sid} (h : Tainted B (some σ)) :
+    ¬ readable B σ.ctx :=
+  h σ rfl
+
+theorem ne_child_denied (n : Nat) : (Response.denied : Response Pay) ≠ .child n := fun h => nomatch h
+theorem ne_child_ok (n : Nat) : (Response.ok : Response Pay) ≠ .child n := fun h => nomatch h
+theorem ne_child_payloads (vs : List Pay) (n : Nat) : (Response.payloads vs) ≠ .child n :=
+  fun h => nomatch h
+
 /-! ## The simulation relation -/
 
 /-- Equal agent states up to the outbox. -/
@@ -385,6 +402,136 @@ noncomputable def run (cfg : Config T U Ext Role Req Qry Pay Sid)
     (D : Data T Ext Pay Sid) : List (Event T Ext Pay) :=
   (runAll cfg D strat sched (initRun cfg D)).state.events
 
+
+/-! ## Facts about `histUpdate` and responses -/
+
+theorem histUpdate_of_ne_child {hist : AgentId Sid → List (Response Pay)} {a : AgentId Sid}
+    {act : Action Ext Role Pay Qry} {r : Response Pay} (hr : ∀ n, r ≠ .child n) :
+    histUpdate hist a act r = fun a' => if a' = a then hist a ++ [r] else hist a' := by
+  funext a'
+  unfold histUpdate
+  cases r <;> cases act <;> first | rfl | exact absurd rfl (hr _)
+
+theorem histUpdate_delegate {hist : AgentId Sid → List (Response Pay)} {a : AgentId Sid}
+    {ρ : Role} {v : Pay} {n : Nat} :
+    histUpdate (Ext := Ext) (Qry := Qry) hist a (.delegate ρ v) (.child n) = fun a' =>
+      if a' = childId a n then [.payload v] else if a' = a then hist a ++ [.child n] else hist a' := rfl
+
+/-! ## A step of an absent-or-tainted agent (run 1 only) -/
+
+theorem Step.leftOK {D : Data T Ext Pay Sid} {B : T} {s s' : State T Ext Role Pay Sid}
+    {a : AgentId Sid} {act : Action Ext Role Pay Qry} {r : Response Pay}
+    (hT : Tainted B (s.agents a)) (hF : Fresh s) (h : Step cfg D s a act r s')
+    (hist : AgentId Sid → List (Response Pay)) :
+    readableDocs B s'.index = readableDocs B s.index ∧
+    obs cfg B s'.events = obs cfg B s.events ∧
+    ∀ b, LeftOK B a s s' hist (histUpdate hist a act r) b := by
+  cases h with
+  | denied _ =>
+    refine ⟨rfl, rfl, fun b => ?_⟩
+    rw [histUpdate_of_ne_child ne_child_denied]
+    by_cases hb : b = a
+    · subst hb; exact Or.inr (Or.inl ⟨hT, hT, Or.inl Iff.rfl⟩)
+    · exact Or.inl ⟨rfl, by simp [hb]⟩
+  | allowed hal =>
+    cases hal with
+    | @call σ p k v i hσ hp hauth hi hobs hint =>
+      have hTσ : ¬ readable B σ.ctx := hT σ hσ
+      refine ⟨rfl, ?_, fun b => ?_⟩
+      · show obs cfg B (s.events ++ [_]) = _
+        rw [obs_append, obs_singleton_of_not, List.append_nil]
+        rintro ⟨i', hi', hB⟩
+        simp only at hi'
+        rw [hi] at hi'; cases hi'
+        exact hTσ (hobs B hB)
+      · rw [histUpdate_of_ne_child (callResp_ne_child D k i v)]
+        by_cases hb : b = a
+        · subst hb
+          refine Or.inr (Or.inl ⟨hT, ?_, Or.inl ?_⟩)
+          · show Tainted B (if b = b then _ else _)
+            simp only [ite_true]
+            exact Tainted.of_not_readable fun hr => hTσ (readable_mono (le_joinResult i σ.ctx) hr)
+          · simp [hσ]
+        · exact Or.inl ⟨by simp [hb], by simp [hb]⟩
+    | @query σ p q hσ hp hauth =>
+      have hTσ : ¬ readable B σ.ctx := hT σ hσ
+      refine ⟨rfl, rfl, fun b => ?_⟩
+      rw [histUpdate_of_ne_child (ne_child_payloads _)]
+      by_cases hb : b = a
+      · subst hb
+        refine Or.inr (Or.inl ⟨hT, ?_, Or.inl ?_⟩)
+        · show Tainted B (if b = b then _ else _)
+          simp only [ite_true]
+          exact Tainted.of_not_readable fun hr => hTσ (readable_mono (Label.le_join_left _ _) hr)
+        · simp [hσ]
+      · exact Or.inl ⟨by simp [hb], by simp [hb]⟩
+    | @write σ p v hσ hp hauth hown =>
+      have hTσ : ¬ readable B σ.ctx := hT σ hσ
+      refine ⟨?_, rfl, fun b => ?_⟩
+      · show readableDocs B (s.index ++ [_]) = _
+        rw [readableDocs_append, readableDocs_singleton_of_not hTσ, List.append_nil]
+      · rw [histUpdate_of_ne_child ne_child_ok]
+        by_cases hb : b = a
+        · subst hb; exact Or.inr (Or.inl ⟨hT, hT, Or.inl Iff.rfl⟩)
+        · exact Or.inl ⟨rfl, by simp [hb]⟩
+    | @delegate σ p ρ v hσ hp hauth =>
+      have hTσ : ¬ readable B σ.ctx := hT σ hσ
+      refine ⟨rfl, rfl, fun b => ?_⟩
+      rw [histUpdate_delegate]
+      by_cases hbc : b = childId a σ.nextChild
+      · subst hbc
+        have hnone : s.agents (childId a σ.nextChild) = none := hF.next a σ hσ _ (Nat.le_refl _)
+        refine Or.inr (Or.inl ⟨hnone ▸ Tainted.none, ?_, Or.inr ⟨_, rfl⟩⟩)
+        simp only [State.setAgent_agents, ite_true]
+        exact Tainted.of_not_readable hTσ
+      · by_cases hb : b = a
+        · subst hb
+          refine Or.inr (Or.inl ⟨hT, ?_, Or.inl ?_⟩)
+          · simp only [State.setAgent_agents, hbc, ite_false, ite_true]
+            exact Tainted.of_not_readable hTσ
+          · simp [hbc, hσ]
+        · exact Or.inl ⟨by simp [hb, hbc], by simp [hb, hbc]⟩
+    | @report σ p v hσ hp hpar =>
+      have hTσ : ¬ readable B σ.ctx := hT σ hσ
+      refine ⟨rfl, rfl, fun b => ?_⟩
+      rw [histUpdate_of_ne_child ne_child_ok]
+      by_cases hb : b = a
+      · subst hb
+        refine Or.inr (Or.inl ⟨hT, ?_, Or.inl ?_⟩)
+        · show Tainted B (if b = b then _ else _)
+          simp only [ite_true]
+          exact Tainted.of_not_readable hTσ
+        · simp [hσ]
+      · exact Or.inl ⟨by simp [hb], by simp [hb]⟩
+    | @receive σ p c σc hσ hp hc =>
+      have hTσ : ¬ readable B σ.ctx := hT σ hσ
+      refine ⟨rfl, rfl, fun b => ?_⟩
+      rw [histUpdate_of_ne_child (ne_child_payloads _)]
+      by_cases hbc : b = childId a c
+      · subst hbc
+        refine Or.inr (Or.inr ⟨by simp [childId_ne], ⟨c, rfl⟩, σc, [], hc, ?_⟩)
+        simp
+      · by_cases hb : b = a
+        · subst hb
+          refine Or.inr (Or.inl ⟨hT, ?_, Or.inl ?_⟩)
+          · simp only [State.setAgent_agents, hbc, ite_false, ite_true]
+            exact Tainted.of_not_readable fun hr => hTσ (readable_mono (Label.le_join_left _ _) hr)
+          · simp [hbc, hσ]
+        · exact Or.inl ⟨by simp [hb, hbc], by simp [hb]⟩
+
+/-- `runStep` of an absent-or-tainted agent in run 1 preserves `Sim`. -/
+theorem Sim.runStep_left {D₁ : Data T Ext Pay Sid} {B : T} {rs₁ rs₂ : RunState T Ext Role Pay Sid}
+    (strat : AgentId Sid → Strategy Ext Role Pay Qry) (hS : Sim cfg B rs₁ rs₂) {a : AgentId Sid}
+    (hT : Tainted B (rs₁.state.agents a)) :
+    Sim cfg B (runStep cfg D₁ strat rs₁ a) rs₂ := by
+  unfold runStep
+  cases hex : rs₁.state.agents a with
+  | none => exact hS
+  | some σ =>
+    simp only
+    have hstep := stepFn_spec (cfg := cfg) D₁ rs₁.state a (strat a (rs₁.hist a))
+    obtain ⟨hI, hE, hA⟩ := Step.leftOK (B := B) (hex ▸ hT) hS.fresh₁ hstep rs₁.hist
+    exact hS.left (hex ▸ hT) (hS.fresh₁.step hstep) hI hE hA
 
 end
 
