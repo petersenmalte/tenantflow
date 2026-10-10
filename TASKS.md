@@ -15,7 +15,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 
 | ID | Tag | Depends on | Status | Title |
 |---|---|---|---|---|
-| S0 | [SONNET] | – | in progress | Repository setup (local part done; GitHub repo not yet created) |
+| S0 | [SONNET] | – | done | Repository setup |
 | O1 | [OPUS] | S0 | open | Draft the formal spec |
 | F0 | [FABLE] | O1 | open | Adversarial spec review, final theorem statements |
 | F1a | [FABLE] | F0 | open | Lean model + executable monitor + theorem (a) isolation |
