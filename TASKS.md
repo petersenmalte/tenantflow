@@ -24,7 +24,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S1 | [SONNET] | F1a | open | Lean oracle executable |
 | S2 | [SONNET] | F1a | open | Python package: adapter, monitor, Cedar per-call check |
 | S3 | [SONNET] | S1, S2 | open | Differential testing Python ↔ Lean oracle |
-| F2 | [FABLE] | F1b | open | Theorem (c) noninterference for the shared RAG index |
+| F2 | [FABLE] | F1b | done | Theorem (c) noninterference for the shared RAG index |
 | F3 | [FABLE] | F2 (or G2 fallback) | open | Theorem (d) refinement: executable monitor implements the model |
 | S4 | [SONNET] | S2 | open | Baselines: none, Cedar-only, FIDES middleware |
 | S5 | [SONNET] | S3, S4 | open | Benchmark suites, adversarial fuzzing agent, latency, plots |
@@ -114,6 +114,9 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 ### F2 [FABLE] Theorem (c) noninterference
 - Statement and low-equivalence as in `docs/spec.md` §7.4; use the simulation relation sketched there, including
   clause (iii) "clean-and-identical or absent-or-tainted". Budget target: 15–20 USD. **Check G2 afterwards.**
+- Done: `Model.noninterference` in `lean/TenantFlow/Proofs/Noninterference.lean` (strategies, schedule, `run`, `LowEq`,
+  `obs`, relation `Sim` with the strengthened clauses (iii)/(iv), see spec changelog "F2 details"); no sorry; axioms in
+  `docs/proof-status.md`. G2: user fills in the spend after this session in `docs/fable-budget.md`.
 
 ### F3 [FABLE] Theorem (d) refinement
 - (d1) forward simulation with denial reasons collapsed by `⌊·⌋`, (d2) initial states agree (`docs/spec.md` §7.5);
@@ -140,6 +143,9 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 ### S8 [SONNET] CI
 - GitHub Actions: `lake build`, check that `Proofs/` contains no `sorry`, pytest, differential tests (small sample),
   JS tests of the game monitor.
+- The `sorry` check must cover `lean/TenantFlow/Proofs.lean` **and** `lean/TenantFlow/Proofs/**` (F2 added
+  `Proofs/Noninterference.lean`). Also run `#print axioms` for the theorems listed in `docs/proof-status.md` and fail on
+  anything but `propext`, `Classical.choice`, `Quot.sound`.
 
 ### S9 [SONNET] Quarto slide deck
 - Style reference: https://ai.katestange.net/ai/course/llm-course/slides/from-tokens-to-transformers/

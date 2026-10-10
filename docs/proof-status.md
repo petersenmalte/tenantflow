@@ -18,7 +18,9 @@ Allowed: `propext`, `Classical.choice`, `Quot.sound`.
 | `Model.child_ctx_eq` (child `ctx` = parent `ctx` at creation) | (b) §7.3 | proven (F1b) | propext, Classical.choice, Quot.sound |
 | `Model.Fresh.init`, `Model.Reachable.fresh` (child ids fresh, needed for `ctx_mono`) | §7.3 helper | proven (F1b) | propext / propext, Classical.choice, Quot.sound |
 | (b1) `Exec` label–payload independence | §7.3 lemma | dropped per §7.3 cost rule (D8 + sanity examples 4, 6 are the evidence) | – |
-| (c) `noninterference` | §7.4 | open (F2) | – |
+| `Model.noninterference` (c: `LowEq cfg B D₁ D₂ → obs cfg B (run cfg strat sched D₁) = obs cfg B (run cfg strat sched D₂)`) | (c) §7.4 | proven (F2), `lean/TenantFlow/Proofs/Noninterference.lean` | propext, Classical.choice, Quot.sound |
+| `Model.Sim.left`, `Model.Sim.lock`, `Model.Step.leftOK`, `Model.Step.lockOK`, `Model.Sim.of_lowEq_init` (simulation relation `Sim`, its preservation, initial states) | §7.4 proof shape | proven (F2) | propext, Classical.choice, Quot.sound |
+| `Model.stepFn`, `Model.run` (step function via `Step.total`/`Classical.choose`; `Step.eq_stepFn` by `Step.det`) | §7.4 definitions | defined (F2), noncomputable | – |
 | (d1) `refines`, (d2) `refines_init` | §7.5 | open (F3) | – |
 
 Checked on 2026-10-10 with `#print axioms` after `lake build` (no `sorry`, no `admit`, no new `axiom` in `lean/`).

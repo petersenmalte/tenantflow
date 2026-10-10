@@ -2,18 +2,19 @@
 
 Overwritten at the end of every session. Keep it short; the next session reads only this, CLAUDE.md and TASKS.md.
 
-- **Last task:** F1b – Theorem (b) no forgery / no laundering (done)
+- **Last task:** F2 – Theorem (c) noninterference (done)
 - **Model:** claude-fable-5-1
-- **State:** `lean/TenantFlow/Proofs.lean` now also has `no_launder` ((b2), pointwise form of the join),
-  `Fresh` (child ids fresh; `Fresh.init`, `Fresh.setAgent`, `Fresh.delegate`, `Fresh.step`, `Reachable.fresh`),
-  `Step.ctx_mono`, `Reachable.ctx_mono`, `ctx_mono`, `GReachable.base`, `ctx_mono_ghost`, `child_ctx_eq`.
+- **State:** new file `lean/TenantFlow/Proofs/Noninterference.lean` (imported from `TenantFlow.lean`):
+  §7.4 definitions (`Strategy`, `RunState`, `stepFn`, `histUpdate`, `runStep`, `runAll`, `initRun`, `run`, `LowEq`,
+  `obs`), relation `Sim` (`Clean`/`Tainted` per agent id, `EqUpToOutbox`), generic preservation lemmas `Sim.left`
+  (absent-or-tainted agent moves in one run) and `Sim.lock` (clean agent moves in both runs), per-action case analyses
+  `Step.leftOK`/`Step.lockOK`, `Allowed.transport`, `Sim.of_lowEq_init`, and `noninterference`.
   `lake build` clean, zero warnings, no sorry. Axioms recorded in `docs/proof-status.md`.
-- **Design decisions F1b:** (b2) is stated pointwise over origins (equivalent to the set join). `ctx_mono` is on
-  `Reachable cfg D (init cfg D) s` + `Reachable cfg D s s'` (base states; ghost version via `GReachable.base`).
-  (b1) dropped per spec §7.3 cost rule (D8 + sanity examples 4 and 6 remain the evidence).
-- **For F2 (theorem (c)):** `Fresh` and `GReachable.base` are reusable. `Inv.reachable` gives label soundness.
-  Note the spec's "absent or tainted" clause in the simulation relation (§7.4) and the `rank_mem` side condition.
+- **Design decisions F2:** see `docs/spec.md` changelog "F2 details" (clause (iv) child existence, outbox exception in
+  (iii), session tenant `B` inside `Clean`, `Fresh` in the relation, `run` via `stepFn := Classical.choose (Step.total …)`).
+- **For F3 (theorem (d)):** `Step.eq_stepFn` (`Step.det` packaged as an equation on `stepFn`) may be handy for (d1);
+  `Allowed.transport` shows which hypotheses of each `Allowed` row depend on the agent state only.
 - **Open `sorry`s (file:line, lemma):** none
 - **What was tried (if stuck):** –
-- **Next task:** F2 [FABLE] – Theorem (c). Session must start with the current Fable spend (gate G2 ≤ 45 USD).
+- **Next task:** F3 [FABLE] – Theorem (d) refinement (budget target 8–10 USD, hard cap; no new FABLE task above 55 USD).
   S1 and S2 [SONNET] are unblocked and can run in parallel on other models.
