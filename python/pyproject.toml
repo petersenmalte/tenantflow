@@ -5,7 +5,9 @@ description = "Tenant isolation for AI agents on shared infrastructure: Cedar pe
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "cedarpy>=4.12.1",
+]
 
 [dependency-groups]
 dev = [

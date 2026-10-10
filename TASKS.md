@@ -22,7 +22,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | F1a | [FABLE] | F0, S0b | done | Lean model + executable monitor + theorem (a) isolation |
 | F1b | [FABLE] | F1a | done | Theorem (b) no label forgery / no laundering |
 | S1 | [SONNET] | F1a | done | Lean oracle executable |
-| S2 | [SONNET] | F1a | open | Python package: adapter, monitor, Cedar per-call check |
+| S2 | [SONNET] | F1a | done | Python package: adapter, monitor, Cedar per-call check |
 | S3 | [SONNET] | S1, S2 | open | Differential testing Python ↔ Lean oracle |
 | F2 | [FABLE] | F1b | done | Theorem (c) noninterference for the shared RAG index |
 | F3 | [FABLE] | F2 (or G2 fallback) | done | Theorem (d) refinement: executable monitor implements the model |
@@ -171,3 +171,9 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 
 ### S11 [SONNET] Website integration
 - Add a project page to petersenmalte.de (separate repository; ask the user for its location).
+
+### S2 – done (notes)
+- `python/src/tenantflow/{monitor,adapter,cedar,gateway,example_server}.py`, tests in `python/tests/test_monitor.py`.
+- `monitor.run_scenario` reads/writes the oracle JSON; matches all 5 hand traces in `lean/Oracle/tests/` (kind/denied/ctx/final).
+- Cedar via `cedarpy`; hand-written schema (cedar-for-agents generator not used, documented in `cedar.py`).
+- Gateway is a minimal JSON-RPC (`tools/list`, `tools/call`) proxy, no MCP SDK dependency.

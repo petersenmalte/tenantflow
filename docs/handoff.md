@@ -2,12 +2,12 @@
 
 Overwritten at the end of every session. Keep it short; the next session reads only this, CLAUDE.md and TASKS.md.
 
-- **Last task:** S1 – Lean oracle executable (done)
+- **Last task:** S2 – Python package (done)
 - **Model:** claude-sonnet-5-5
-- **State:** `lean/Oracle/Main.lean` (+ `lean_exe oracle` in `lean/lakefile.toml`), format in `docs/oracle-format.md`,
-  5 hand-written traces with expected outputs in `lean/Oracle/tests/` (`run.sh`). `Model/`, `Exec/`, `Proofs/` untouched.
-- **Notes for S2/S3:** the Python monitor must port the toy `score` exactly (whitespace tokens, see format doc) and
-  the Cedar stand-in (allow-list of `(role, action name)`). Compare `kind`/`denied`/`ctx`/`final`, not `reason`.
-  Ext tools may not be called `deliver`.
+- **State:** `python/src/tenantflow/` has `monitor` (port of `Exec.step`, `run_scenario` = oracle format),
+  `adapter` (RAG index), `cedar` (cedarpy authorizer), `gateway` (JSON-RPC proxy), `example_server`.
+  `uv run pytest -q` and `ruff check` green; the 5 oracle traces agree with the Python monitor.
+- **Notes for S3:** use `tenantflow.monitor.run_scenario(sc)`; compare `kind`/`denied`/`ctx`/`final`, not `reason`.
+  Payload number formatting (floats) in `payload_text` may differ from Lean's `compress`; avoid floats in generators.
 - **Open `sorry`s:** none
-- **Next task:** S2 [SONNET] – Python package (S3 after S2).
+- **Next task:** S3 [SONNET] – differential testing (or S4).
