@@ -353,7 +353,7 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 ### S11 – done (notes; worked by claude-opus-5-5 at the user's explicit request)
 - Homepage repo `petersenmalte/petersenmalte-homepage` (static GitHub Pages): `tenantflow.html` (project page, wording
   from the claim-reviewed README, theorem names with assumptions), reachable via `cd tenantflow` in the site's terminal
-  like `education`/`work` (not linked from the index, following the site's convention); `projects/tenantflow/` = deck
+  and a shield icon at the right edge of the index (user's choice, mirrors the ledger icon); `projects/tenantflow/` = deck
   `_site/` incl. game copy; Playwright tests `tests/tenantflow.spec.js`. Delivered as PR #16 (merge = deploy).
 - `web/publish-homepage.sh` here renders the deck and copies the build; `REVISION` records the source commit.
 - Limits: the published build is a copy and goes stale when deck or game change (publish again); MathJax comes from a
