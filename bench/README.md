@@ -64,8 +64,13 @@ Code: `world.py` (two tenants, shared index, tool registry, Cedar policy), `suit
   tenant data, an event whose label is not readable by an observer of the tool, a trusted-only tool run on an
   untrusted context. Scripted attacks use concrete goals (canary string seen by / sent to the other tenant, `pay` ran).
 * **Latency:** wall clock of `step` per decision (200 episodes x 30 steps per variant, Apple/CPython, single thread).
-  It is dominated by the Cedar call through `cedarpy` (about 170 microseconds); the monitor itself adds no
-  measurable cost on top (`none` is only the monitor-free path without Cedar).
+  It is dominated by the Cedar call through `cedarpy` (about 100–170 microseconds depending on the machine load).
+  `latency_monitor_only` measures TenantFlow's monitor with Cedar stubbed to "allow" on the same episodes (S19):
+  p50/p99 in the single-digit microseconds. Both include decisions that end early (unknown agent or tool), which
+  is why the mean is below the median in `latency`.
+* **Provenance:** `meta.git` is the commit the run used; `meta.dirty` is true if `bench/` or `python/src` had
+  uncommitted changes (then `meta.git` does not identify the code). Results before S19 were produced with
+  uncommitted S5 code under revision `4775e8a`.
 
 ### Reading the results honestly
 

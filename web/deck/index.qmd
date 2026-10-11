@@ -235,7 +235,7 @@ Random attacker, {{< var meta.episodes >}} runs: any violation in {{< var fuzz.c
 :::
 
 ::: {.fragment .small}
-**Read with care:** TenantFlow's 0 is what the theorems predict (same label definitions), not independent evidence. Baselines are saturated by design; suites are small (n = 4–8). Latency p50 ≈ {{< var latency.tenantflow.p50 >}} µs, dominated by the Cedar call. Seed {{< var meta.seed >}}, revision `{{< var meta.git >}}`, `bench/results/results.json`.
+**Read with care:** TenantFlow's 0 is what the theorems predict (same label definitions), not independent evidence. Baselines are saturated by design; suites are small (n = 4–8). Latency per decision p50 ≈ {{< var latency.tenantflow.p50 >}} µs, almost all of it the Cedar call; the monitor alone (Cedar stubbed) p50 {{< var monitor_only.p50 >}} µs, p99 {{< var monitor_only.p99 >}} µs. Seed {{< var meta.seed >}}, revision `{{< var meta.git >}}`, `bench/results/results.json`.
 :::
 :::
 ::::

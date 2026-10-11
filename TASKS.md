@@ -43,7 +43,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S16 | [SONNET] | S10 | done | Randomised differential test JS game monitor ↔ Lean oracle (as S3 for Python) |
 | S17 | [SONNET] | S9 | done | Deck: navigation bug (only slide 1 reachable), redesign: interactive, staged, intuitive |
 | S18 | [SONNET] | S10, S16 | done | Game: redesign: intuitive, guided, animated; verify in a real browser |
-| S19 | [SONNET] | S5 | open | Benchmark: rerun on a clean commit; report monitor-only latency separately from Cedar |
+| S19 | [SONNET] | S5 | done | Benchmark: rerun on a clean commit; report monitor-only latency separately from Cedar |
 | S20 | [SONNET] | S2 | open | Decide/close S2 gaps: Cedar schema via cedar-for-agents generator, gateway as real MCP |
 | S21 | [SONNET] | – | open | `.gitignore`: dangling comment "Personal German user guide" without a pattern |
 | F5 | [FABLE] | F3 | deferred (user: budget goes to F6 + F7) | (b1) on `Exec`: decisions and labels are independent of payload content (forgery claim at code level) |
@@ -227,6 +227,9 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
   afterwards. Rerun on a clean commit and regenerate the deck variables.
 - Latency mean (99 µs) < median (169 µs): ~40 % of decisions exit before Cedar. Report the monitor alone (without
   Cedar) separately, so "the monitor adds no measurable cost" is measured, not inferred.
+- Done (Opus): `latency_monitor_only` and `meta.dirty` in `bench/run.py`; rerun on clean commit `5275c58`
+  (same rates as before; latency p50 ≈ 101 µs with Cedar, monitor alone p50 0.46 µs / p99 6.1 µs). Deck variables
+  regenerated; `bench/README.md` updated.
 
 ### S20 [SONNET] S2 gaps
 - Cedar schema is hand-written (task asked for the cedar-for-agents generator where possible); the gateway is a
