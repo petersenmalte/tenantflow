@@ -79,7 +79,8 @@
   const DECK = "../deck/index.html#/";
   const LEAN = "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs.lean";
   const thm = (name) => ({ name, url: LEAN });
-  const slide = (n, title) => ({ label: `Slide ${n}: ${title}`, href: DECK + (n - 1) });
+  // n = number of the content slide in the brief (the deck has an extra title slide at #/0)
+  const slide = (n, title) => ({ label: title, href: DECK + n });
 
   /** One sentence for a step. `before`/`after`: {won} flags of the goal; `mode`; act; resp. */
   function explain(mode, act, resp, ctx) {

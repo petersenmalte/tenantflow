@@ -69,3 +69,12 @@ jobs:
           else
             echo "web/game/package.json not present yet; skipping"
           fi
+  deck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deck variables are generated from bench/results
+        run: python3 web/deck/scripts/gen_variables.py --check
+      - uses: quarto-dev/quarto-actions/setup@v2
+      - name: Render the deck
+        run: quarto render web/deck/index.qmd

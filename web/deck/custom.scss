@@ -1,0 +1,26 @@
+/*-- scss:defaults --*/
+$body-bg: #ffffff;
+$body-color: #1b1f27;
+$link-color: #2563eb;
+$presentation-font-size-root: 30px;
+$presentation-heading-font-weight: 700;
+
+/*-- scss:rules --*/
+// colour convention: tenant A (bank) blue, tenant B (insurer) gold, untrusted data red dashed
+.chip { display: inline-block; padding: 0 .55em; border-radius: 999px; border: 2px solid; font-size: .7em; margin: .1em .2em; white-space: nowrap; }
+.chip.bank { background: #dbe7ff; border-color: #2563eb; }
+.chip.insure { background: #fdecc8; border-color: #b7791f; }
+.chip.untrusted { background: transparent; border: 2px dashed #c0392b; color: #c0392b; }
+.stage { display: flex; gap: .6em; justify-content: space-between; align-items: stretch; margin: .6em 0; }
+.zone { flex: 1; border: 2px solid #c8ccd4; border-radius: 10px; padding: .3em .5em; min-height: 3.2em; font-size: .7em; }
+.zone.bank { border-color: #2563eb; }
+.zone.insure { border-color: #b7791f; }
+.zone h4 { margin: 0 0 .2em; font-size: .9em; }
+.ok { color: #1e7f4f; font-weight: 700; }
+.no { color: #c0392b; font-weight: 700; }
+.small { font-size: .62em; }
+.arrow { align-self: center; font-size: 1.2em; }
+table { font-size: .6em; }
+.reveal pre code { font-size: .55em; }
+.cols { display: flex; gap: 1em; }
+.cols > div { flex: 1; }

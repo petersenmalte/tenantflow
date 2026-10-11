@@ -32,7 +32,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S6 | [SONNET] | S5 | open | OPTIONAL – small real-LLM utility run (ask user first, costs API money) |
 | S7 | [SONNET] | S3 | done | CLI `tenantflow check` (CI mode with counterexamples) |
 | S8 | [SONNET] | S1, S3 | done | GitHub Actions CI |
-| S9 | [SONNET] | S5 | open | Quarto slide deck |
+| S9 | [SONNET] | S5 | done | Quarto slide deck |
 | S10 | [SONNET] | S3, S5 | done | Browser game "Leak the Vault" |
 | O2 | [OPUS] | all above | open | Final review: claims vs. proofs, README, limitations |
 | S11 | [SONNET] | O2 | open | Integrate deck and game into petersenmalte.de |
@@ -164,6 +164,12 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 ### S10 [SONNET] Browser game "Leak the Vault"
 - Levels 1–5 from the brief, protection switch (off / Cedar / FIDES / TenantFlow), "Warum?" panel linking to deck
   slide and Lean theorem. Monitor ported to JS and tested against oracle outputs. Static, no server.
+
+### S9 – done (notes)
+- `web/deck/`: `index.qmd` (10 slides + title), `custom.scss`, `scripts/gen_variables.py` (numbers from `bench/results/results.json`
+  into `_variables.yml`), `python/tests/test_deck.py`, CI job `deck`. Deviations and limits: `web/deck/README.md`.
+- **Not rendered**: Quarto was not installed here; layout and builds are unchecked (see README). The game's "Why?" links now use
+  `../deck/index.html#/N` (N = content slide).
 
 ### S10 – done (notes)
 - `web/game/` (static, open `index.html`): `src/monitor.js` (JS port of the monitor + the three baselines), `src/levels.js`,

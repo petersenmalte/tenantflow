@@ -3,7 +3,7 @@
 Static browser game (no server, no dependencies): open `index.html`. You play a compromised agent on a platform
 that shares one RAG index between a bank (blue) and an insurer (gold); untrusted data is red and dashed.
 Protection switch: **Off / Cedar / FIDES / TenantFlow**. The "Why?" panel explains each decision in one sentence and
-links the Lean theorem and the deck slide (deck links are placeholders until the deck, task S9, exists).
+links the Lean theorem and the deck slide (deck: `web/deck`; links `../deck/index.html#/N` with N = content slide, the title slide is `#/0`).
 
 | Level | Attempt | Lesson |
 |---|---|---|
