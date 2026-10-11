@@ -173,9 +173,7 @@ def main() -> None:
         res["latency_monitor_only"]["p99_us"],
     )
     if dirty:
-        print(
-            "WARNING: bench/ or python/src has uncommitted changes; meta.git does not identify the code"
-        )
+        print("WARNING: uncommitted changes in bench/ or python/src; meta.git is not the code")
 
 
 if __name__ == "__main__":
