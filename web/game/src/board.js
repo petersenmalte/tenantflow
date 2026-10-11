@@ -21,7 +21,8 @@
     return e;
   };
   const show = (v) => (typeof v === "string" ? v : JSON.stringify(v));
-  const short = (v) => { const s = show(v); return s.length > 26 ? s.slice(0, 24) + "…" : s; };
+  const isVar = (v) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 1 && typeof v.var === "string";
+  const short = (v) => { if (isVar(v)) return "🔒 hidden by FIDES (" + v.var + ")"; const s = show(v); return s.length > 26 ? s.slice(0, 24) + "…" : s; };
   const TENANT_NAME = { bank: "Bank", insure: "Insurer" };
 
   function labelClass(label) {

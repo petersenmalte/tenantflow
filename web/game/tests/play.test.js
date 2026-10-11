@@ -19,7 +19,7 @@ const MOVES = {
     s.drop({ kind: "doc", i: s.mon.index.length - 1 }, { kind: "agent", agent: INS }),
   ],
   3: (s) => [
-    s.drop({ kind: "source", tool: "fetch" }, { kind: "agent", agent: BANK }),
+    s.drop(chip(s, BANK), { kind: "sink", tool: "forward" }),
     s.drop(chip(s, BANK), { kind: "sink", tool: "pay" }),
   ],
   4: (s) => [

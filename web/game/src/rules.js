@@ -82,7 +82,7 @@
   const MODE_WHY = {
     none: "No protection is switched on, so nothing is checked.",
     "cedar-only": "Cedar allowed this single call, and nothing remembers where the data came from.",
-    fides: "FIDES labels have no tenant, and FIDES believes labels that data writes about itself.",
+    fides: "FIDES has no tenant in its labels, and for a tool without a trust declaration it believes labels written in the call's arguments.",
   };
 
   function explain(mode, act, resp, ctx) {

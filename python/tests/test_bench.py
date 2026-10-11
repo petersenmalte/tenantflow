@@ -12,12 +12,34 @@ from world import VARIANTS, make, run, violations  # noqa: E402
 
 def test_scripted_attacks_and_utility():
     for sc in [*suites.SUITE1, *suites.SUITE2]:
-        mon = make("tenantflow", sc.tool_results, sc.extra_docs)
+        mon = make("tenantflow", sc.tool_results, sc.extra_docs, sc.fides)
         assert not sc.check(mon, run(mon, sc.steps)), sc.id
         assert not violations(mon).any, sc.id
+    # FIDES with auto_hide_untrusted (default) hides fetched content from the agent, so a workflow
+    # that reads a web page cannot complete: a real utility cost of that design, not a harness bug.
+    expected_fail = {("fides", "3b-fetch-then-deliver")}
     for sc in suites.SUITE3:
         for v in VARIANTS:
-            mon = make(v, sc.tool_results, sc.extra_docs)
+            mon = make(v, sc.tool_results, sc.extra_docs, sc.fides)
+            assert sc.check(mon, run(mon, sc.steps)) != ((v, sc.id) in expected_fail), (v, sc.id)
+
+
+def test_fides_forgery_only_under_poc_conditions():
+    """Suite 2 against FIDES: the bypass needs the APIsec PoC conditions (2a, 2b)."""
+    got = {}
+    for sc in suites.SUITE2:
+        mon = make("fides", sc.tool_results, sc.extra_docs, sc.fides)
+        got[sc.id] = sc.check(mon, run(mon, sc.steps))
+    assert got == {
+        "2a-argument-label-poc": True,
+        "2b-missing-field-default": True,
+        "2c-default-hiding": False,
+        "2d-monotone-context": False,
+        "2e-unlabelled-control": False,
+    }
+    for v in ("none", "cedar-only"):
+        for sc in suites.SUITE2:
+            mon = make(v, sc.tool_results, sc.extra_docs, sc.fides)
             assert sc.check(mon, run(mon, sc.steps)), (v, sc.id)
 
 

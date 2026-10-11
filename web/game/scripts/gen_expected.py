@@ -16,7 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tenantflow.baselines import Baseline
+from tenantflow.baselines import Baseline, FidesConfig
 from tenantflow.monitor import Action, monitor_from_scenario, parse_agent, run_scenario
 
 HERE = Path(__file__).resolve().parent
@@ -27,7 +27,9 @@ ORACLE = Path(os.environ.get("TF_ORACLE", HERE.parents[2] / "lean/.lake/build/bi
 def run_mode(sc: dict, mode: str) -> dict:
     if mode == "tenantflow":
         return run_scenario(sc)
-    mon = Baseline.from_monitor(mode, monitor_from_scenario(sc))
+    mon = Baseline.from_monitor(
+        mode, monitor_from_scenario(sc), FidesConfig.from_json(sc.get("fides"))
+    )
     decisions = []
     for step in sc["trace"]:
         a = parse_agent(step["agent"])

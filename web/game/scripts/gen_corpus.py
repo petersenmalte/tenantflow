@@ -49,6 +49,14 @@ def main() -> int:
             drawn.append(sc)
 
         collect()
+    # FIDES deployment per scenario (ignored by the oracle and by TenantFlow): undeclared tools and
+    # auto_hide_untrusted vary deterministically, so that tiers 2/3 and hiding are all exercised.
+    ext = ["fetch", "lookup", "notify"]
+    for i, sc in enumerate(drawn):
+        sc["fides"] = {
+            "undeclared": [t for k, t in enumerate(ext) if (i >> k) & 1],
+            "autoHide": i % 3 != 0,
+        }
     corpus = []
     for sc in drawn:
         res = subprocess.run(

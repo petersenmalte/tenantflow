@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from tenantflow.baselines import Baseline
+from tenantflow.baselines import Baseline, FidesConfig
 from tenantflow.cedar import CedarAuthorizer
 from tenantflow.check import Violations, violations  # noqa: F401 (re-exported)
 from tenantflow.monitor import (
@@ -29,6 +29,7 @@ BANK2: AgentId = ("3", ())
 ACTIONS = [
     "call:deliver",
     "call:fetch",
+    "call:forward",
     "call:pay",
     "call:lookup",
     "call:notify_bank",
@@ -47,6 +48,9 @@ def tools() -> dict[str, ToolInfo]:
     return {
         # external, attacker-influenced content: result is untrusted
         "fetch": ToolInfo(frozenset(), False, Label(frozenset(), UNTRUSTED)),
+        # relays its argument to an external ticket system and returns the reply: untrusted result.
+        # In the FIDES deployment it declares no source_integrity (a "transformation" tool).
+        "forward": ToolInfo(frozenset(), False, Label(frozenset(), UNTRUSTED)),
         # sensitive action that must only run on trusted context
         "pay": ToolInfo(frozenset(), True, None),
         # internal, trusted data source
@@ -57,8 +61,17 @@ def tools() -> dict[str, ToolInfo]:
     }
 
 
+# FIDES deployment of the world: `forward` declares no source_integrity, shipped defaults otherwise.
+FIDES_DEFAULT = FidesConfig(frozenset({"forward"}), auto_hide=True)
+# The conditions of the APIsec proof of concept: additionally auto_hide_untrusted=False.
+FIDES_POC = FidesConfig(frozenset({"forward"}), auto_hide=False)
+
+
 def make(
-    variant: str, tool_results: dict[str, Any] | None = None, extra_docs: list[Doc] | None = None
+    variant: str,
+    tool_results: dict[str, Any] | None = None,
+    extra_docs: list[Doc] | None = None,
+    fides: FidesConfig | None = None,
 ) -> Monitor:
     mon = Monitor(
         sessions={
@@ -76,7 +89,9 @@ def make(
             *(extra_docs or []),
         ],
     )
-    return mon if variant == "tenantflow" else Baseline.from_monitor(variant, mon)
+    if variant == "tenantflow":
+        return mon
+    return Baseline.from_monitor(variant, mon, fides or FIDES_DEFAULT)
 
 
 Step = tuple[AgentId, Action]

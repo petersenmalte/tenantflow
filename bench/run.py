@@ -40,7 +40,7 @@ def scripted(scenarios: list[suites.Scenario]) -> dict:
     for v in VARIANTS:
         per = {}
         for sc in scenarios:
-            mon = make(v, sc.tool_results, sc.extra_docs)
+            mon = make(v, sc.tool_results, sc.extra_docs, sc.fides)
             log = run(mon, sc.steps)
             per[sc.id] = bool(sc.check(mon, log))
         k = sum(per.values())

@@ -1,5 +1,6 @@
 // JS port of tenantflow.monitor (itself a line-by-line port of Lean `Exec.step`) and of the benchmark
-// baselines (none / cedar-only / fides, see python/src/tenantflow/baselines.py).
+// baselines (none / cedar-only / fides, see python/src/tenantflow/baselines.py; FIDES follows agent-framework-core
+// 1.5.0: tier 2 declared source_integrity, tier 3 labels found in the call arguments, auto_hide_untrusted).
 // Classic script that works in the browser (global `TF`) and in Node (`require`).
 (function (root) {
   "use strict";
@@ -45,10 +46,10 @@
     integrity: a.integrity === UNTRUSTED || b.integrity === UNTRUSTED ? UNTRUSTED : TRUSTED,
     conf: CONF[a.conf] >= CONF[b.conf] ? a.conf : b.conf,
   });
+  const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
   function embeddedLabel(p) {
-    // Tier 1: a label embedded in the data itself (the forgeable part).
-    if (p && typeof p === "object" && !Array.isArray(p) && p.security_label &&
-        typeof p.security_label === "object" && !Array.isArray(p.security_label)) {
+    // ContentLabel.from_dict of a dict's security_label field (the forgeable part), or null
+    if (isObj(p) && "security_label" in p && isObj(p.security_label)) {
       const d = p.security_label;
       const integ = "integrity" in d ? d.integrity : TRUSTED;
       const conf = "confidentiality" in d ? d.confidentiality : "public";
@@ -73,6 +74,8 @@
       this.events = [];
       this.fidesCtx = new Map();
       this.fidesDocs = new Map(); // doc object -> FidesLabel
+      this.fidesCfg = { undeclared: new Set((cfg.fides && cfg.fides.undeclared) || []), autoHide: !cfg.fides || cfg.fides.autoHide !== false };
+      this.fidesVars = new Map(); // var id -> [FIDES label, ground-truth label of the hidden data]
       for (const [sid, [tenant, , role]] of Object.entries(this.sessions)) {
         const a = { session: sid, path: [] };
         this.agents.set(agentKey(a), { id: a, session: sid, role, ctx: label([tenant]), nextChild: 0, outbox: [], parent: null });
@@ -90,6 +93,22 @@
         .sort((x, y) => y[2] - x[2] || x[1] - y[1]).slice(0, this.topK).map((x) => x[0]);
     }
     actionName(act) { return act.op === "call" ? "call:" + act.tool : act.op; }
+    /** _get_input_labels: labels in the call arguments (+ ground truth of referenced hidden results) */
+    argLabels(value) {
+      const fl = [], gt = [];
+      const walk = (v) => {
+        if (isObj(v) && Object.keys(v).length === 1 && typeof v.var === "string" && this.fidesVars.has(v.var)) {
+          const [f, g] = this.fidesVars.get(v.var); fl.push(f); gt.push(g);
+        } else if (isObj(v)) {
+          let lab = embeddedLabel(v);
+          if (!lab && !("security_label" in v) && isObj(v.label)) lab = embeddedLabel({ security_label: v.label });
+          if (lab) fl.push(lab);
+          Object.values(v).forEach(walk);
+        } else if (Array.isArray(v)) v.forEach(walk);
+      };
+      walk(value);
+      return [fl, gt];
+    }
 
     step(a, act) {
       const key = agentKey(a);
@@ -113,15 +132,26 @@
           } else if (fides && info.needsTrusted && fctx.integrity !== TRUSTED) {
             return denied("fides: untrusted context");
           }
-          let resp = { kind: "ok" }, resultFl = null;
-          if (act.tool !== DELIVER && info.result) {
-            const value = clone(this.toolResults[act.tool] ?? null);
-            resp = { kind: "payload", value };
-            resultFl = embeddedLabel(value) || fidesLabel(info.result.integ, "private");
+          const [argFl, argGt] = fides ? this.argLabels(act.args) : [[], []];
+          const eventLabel = argGt.reduce(join, st.ctx); // dereferenced hidden data flows into the tool
+          let resp = { kind: "ok" };
+          if (act.tool !== DELIVER && info.result) resp = { kind: "payload", value: clone(this.toolResults[act.tool] ?? null) };
+          this.events.push({ tenant: t, tool: act.tool, args: clone(act.args ?? null), label: eventLabel });
+          if (!info.result) return resp; // nothing comes back to the agent
+          const gtResult = join(eventLabel, info.result);
+          if (!fides) { st.ctx = gtResult; return resp; }
+          let resultFl;
+          if (!this.fidesCfg.undeclared.has(act.tool)) resultFl = fidesLabel(info.result.integ, "private"); // tier 2
+          else if (argFl.length) resultFl = fidesLabel(argFl.reduce(fidesJoin, fidesLabel()).integrity, "private"); // tier 3
+          else resultFl = fidesLabel(UNTRUSTED, "private");
+          if (this.fidesCfg.autoHide && resultFl.integrity === UNTRUSTED && resp.kind === "payload") {
+            const vid = "var_" + (this.fidesVars.size + 1);
+            this.fidesVars.set(vid, [resultFl, gtResult]);
+            this.fidesCtx.set(key, fidesLabel(fctx.integrity, fidesJoin(fctx, resultFl).conf)); // hidden: integrity unchanged
+            return { kind: "payload", value: { var: vid } };
           }
-          this.events.push({ tenant: t, tool: act.tool, args: clone(act.args ?? null), label: st.ctx });
-          if (info.result) st.ctx = join(st.ctx, info.result);
-          if (fides && resultFl) this.fidesCtx.set(key, fidesJoin(fctx, resultFl));
+          st.ctx = gtResult;
+          this.fidesCtx.set(key, fidesJoin(fctx, resultFl));
           return resp;
         }
         case "query": {
@@ -141,7 +171,7 @@
           if (tf && !readableBy(st.ctx, t)) return denied("flow: tainted agent may not write");
           const doc = { label: st.ctx, payload: clone(act.payload ?? null) };
           this.index.push(doc);
-          if (fides) this.fidesDocs.set(doc, embeddedLabel(act.payload) || fidesLabel(fctx.integrity, "private"));
+          if (fides) this.fidesDocs.set(doc, fidesLabel(fctx.integrity, "private"));
           return { kind: "ok" };
         }
         case "delegate": {
@@ -219,7 +249,7 @@
     const cedar = sc.cedar ?? "allow_all";
     const allowed = cedar === "allow_all" ? null : new Set(cedar.allow.map((r) => r.role + "\u0000" + r.action));
     return new Monitor(mode, {
-      sessions, tools, toolResults: sc.toolResults || {}, topK: sc.topK ?? 3,
+      sessions, tools, toolResults: sc.toolResults || {}, topK: sc.topK ?? 3, fides: sc.fides,
       authorize: allowed ? (role, action) => allowed.has(role + "\u0000" + action) : () => true,
       index: (sc.index || []).map((d) => ({ label: labelFromJson(d.label), payload: d.payload })),
     });

@@ -9,10 +9,17 @@ trusting the baseline.
 * ``none``       - no checks; the shared index is not filtered per tenant.
 * ``cedar-only`` - per-call Cedar check only; index not filtered, no flow tracking.
 * ``fides``      - Cedar + a re-implementation of the label logic of the FIDES middleware of
-  Microsoft Agent Framework (``agent-framework-core`` 1.5.0): integrity (trusted/untrusted) and
-  confidentiality (public/private) labels, joined to the most restrictive. Labels embedded in
-  data (``{"security_label": {...}}``) are *accepted* (tier 1) and absent fields default to
-  ``trusted`` (``ContentLabel.from_dict``). There is no tenant in the labels.
+  Microsoft Agent Framework (``agent-framework-core`` 1.5.0, ``LabelTrackingFunctionMiddleware``),
+  following its source (S15): integrity (trusted/untrusted) and confidentiality (public/private)
+  labels, the context label only ever joins. The label of a tool result is the tool's declared
+  ``source_integrity`` (tier 2); for a tool *without* a declaration it is the join of the labels
+  found in the call arguments (tier 3: any dict with a ``security_label`` key, parsed by
+  ``ContentLabel.from_dict``, missing fields default to ``trusted``; variable references carry the
+  label of the hidden result), else ``untrusted``. This argument scan is the forgery path
+  described by APIsec Labs. With ``auto_hide_untrusted`` (default on) an untrusted result is
+  replaced by a variable reference and does not taint the context. Tier 1 (labels in a result
+  item's ``additional_properties``) is framework metadata, not attacker data, and is not modelled.
+  There is no tenant in the labels.
 
 The FIDES baseline is a **re-implementation**, not the middleware itself (see ``bench/README.md``).
 ``tests/test_baselines.py`` cross-checks its label functions against the real package when the
@@ -69,7 +76,7 @@ class FidesLabel:
 
 
 def embedded_label(payload: Any) -> FidesLabel | None:
-    """Tier 1: a label embedded in the data itself (the forgeable part)."""
+    """``ContentLabel.from_dict`` of a dict's ``security_label`` field, or None."""
     if isinstance(payload, dict) and isinstance(payload.get("security_label"), dict):
         try:
             return FidesLabel.from_dict(payload["security_label"])
@@ -78,15 +85,48 @@ def embedded_label(payload: Any) -> FidesLabel | None:
     return None
 
 
+@dataclass(frozen=True)
+class FidesConfig:
+    """Deployment choices of the FIDES middleware that the attack depends on."""
+
+    undeclared: frozenset[str] = frozenset()  # tools without a source_integrity declaration
+    auto_hide: bool = True  # auto_hide_untrusted (the shipped default)
+
+    @staticmethod
+    def from_json(j: dict[str, Any] | None) -> FidesConfig:
+        j = j or {}
+        return FidesConfig(frozenset(j.get("undeclared", [])), bool(j.get("autoHide", True)))
+
+
+def is_var(v: Any) -> bool:
+    return isinstance(v, dict) and set(v) == {"var"} and isinstance(v["var"], str)
+
+
+def join_fides(labels: list[FidesLabel]) -> FidesLabel:
+    out = FidesLabel()
+    for lab in labels:
+        out = out.join(lab)
+    return out
+
+
+def fides_conf_join(a: FidesLabel, b: FidesLabel) -> str:
+    return a.join(b).confidentiality
+
+
 class Baseline(Monitor):
     """Monitor-compatible baseline; ``mode`` is ``none``, ``cedar-only`` or ``fides``."""
 
-    def __init__(self, mode: str, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self, mode: str, *args: Any, fides: FidesConfig | None = None, **kwargs: Any
+    ) -> None:
         if mode not in ("none", "cedar-only", "fides"):
             raise ValueError(f"unknown baseline '{mode}'")
         self.mode = mode
+        self.fides_cfg = fides or FidesConfig()
         self.fides_ctx: dict[AgentId, FidesLabel] = {}
         self.fides_docs: dict[int, FidesLabel] = {}  # id(Doc) -> label as FIDES sees it
+        # hidden results: variable id -> (FIDES label, ground-truth label of the hidden data)
+        self.fides_vars: dict[str, tuple[FidesLabel, Any]] = {}
         super().__init__(*args, **kwargs)
         for a in self.agents:
             self.fides_ctx[a] = FidesLabel(TRUSTED, PUBLIC)
@@ -94,9 +134,10 @@ class Baseline(Monitor):
             self.fides_docs[id(d)] = FidesLabel(TRUSTED, PRIVATE)
 
     @classmethod
-    def from_monitor(cls, mode: str, mon: Monitor) -> Baseline:
+    def from_monitor(cls, mode: str, mon: Monitor, fides: FidesConfig | None = None) -> Baseline:
         return cls(
             mode,
+            fides=fides,
             sessions=mon.sessions,
             tools=mon.tools,
             tool_results=mon.tool_results,
@@ -104,6 +145,32 @@ class Baseline(Monitor):
             top_k=mon.top_k,
             index=copy.deepcopy(mon.index),
         )
+
+    def _arg_labels(self, value: Any) -> tuple[list[FidesLabel], list[Any]]:
+        """``_get_input_labels``: labels in the call arguments, plus ground-truth labels of the
+        hidden results that the arguments reference."""
+        fl: list[FidesLabel] = []
+        gt: list[Any] = []
+
+        def walk(v: Any) -> None:
+            if is_var(v) and v["var"] in self.fides_vars:
+                f, g = self.fides_vars[v["var"]]
+                fl.append(f)
+                gt.append(g)
+            elif isinstance(v, dict):
+                lab = embedded_label(v)
+                if lab is None and "security_label" not in v and isinstance(v.get("label"), dict):
+                    lab = embedded_label({"security_label": v["label"]})  # legacy key
+                if lab is not None:
+                    fl.append(lab)
+                for x in v.values():
+                    walk(x)
+            elif isinstance(v, list | tuple):
+                for x in v:
+                    walk(x)
+
+        walk(value)
+        return fl, gt
 
     def _cedar_ok(self, role: str, act: Action) -> bool:
         return self.mode == "none" or self.authorize(role, act.name)
@@ -128,18 +195,40 @@ class Baseline(Monitor):
                 return denied("cedar")
             if fides and info.needs_trusted and fctx.integrity != TRUSTED:
                 return denied("fides: untrusted context")
+            arg_fl, arg_gt = self._arg_labels(act.args) if fides else ([], [])
+            event_label = st.ctx
+            for g in arg_gt:  # dereferenced hidden data flows into the tool
+                event_label = event_label.join(g)
             resp = Response("ok")
-            result_fl: FidesLabel | None = None
             if act.tool != DELIVER and info.result is not None:
-                value = copy.deepcopy(self.tool_results.get(act.tool))
-                resp = Response("payload", value)
-                # tier 1 (embedded, forgeable) > tier 2 (tool's declared source integrity)
-                result_fl = embedded_label(value) or FidesLabel(info.result.integ, PRIVATE)
-            self.events.append(Event(t, act.tool, act.args, st.ctx))  # ground truth label
-            if info.result is not None:
-                st.ctx = st.ctx.join(info.result)
-            if fides and result_fl is not None:
-                self.fides_ctx[a] = fctx.join(result_fl)
+                resp = Response("payload", copy.deepcopy(self.tool_results.get(act.tool)))
+            self.events.append(Event(t, act.tool, act.args, event_label))  # ground truth label
+            if info.result is None:  # nothing comes back to the agent
+                return resp
+            gt_result = event_label.join(info.result)
+            if not fides:
+                st.ctx = gt_result
+                return resp
+            # tier 2: declared source_integrity; tier 3: join of argument labels, else untrusted
+            if act.tool not in self.fides_cfg.undeclared:
+                result_fl = FidesLabel(info.result.integ, PRIVATE)
+            elif arg_fl:
+                result_fl = FidesLabel(join_fides(arg_fl).integrity, PRIVATE)
+            else:
+                result_fl = FidesLabel(UNTRUSTED, PRIVATE)
+            if (
+                self.fides_cfg.auto_hide
+                and result_fl.integrity == UNTRUSTED
+                and resp.kind == "payload"
+            ):
+                vid = f"var_{len(self.fides_vars) + 1}"
+                self.fides_vars[vid] = (result_fl, gt_result)
+                resp = Response("payload", {"var": vid})  # the agent only sees a reference
+                # hidden: the data did not reach the agent, its context is unchanged
+                self.fides_ctx[a] = FidesLabel(fctx.integrity, fides_conf_join(fctx, result_fl))
+                return resp
+            st.ctx = gt_result
+            self.fides_ctx[a] = fctx.join(result_fl)
             return resp
         if act.op == "query":
             if not cedar:
@@ -157,9 +246,7 @@ class Baseline(Monitor):
             doc = Doc(st.ctx, act.args)  # ground-truth label, not enforced
             self.index.append(doc)
             if fides:
-                self.fides_docs[id(doc)] = embedded_label(act.args) or FidesLabel(
-                    fctx.integrity, PRIVATE
-                )
+                self.fides_docs[id(doc)] = FidesLabel(fctx.integrity, PRIVATE)
             return Response("ok")
         if act.op == "delegate":
             if not cedar:

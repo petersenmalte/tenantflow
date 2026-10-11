@@ -20,6 +20,7 @@
       this.mon = M.monitorFromScenario(sc, mode);
       this.hands = new Map(); // agentKey -> [chip]
       for (const st of this.mon.agents.values()) this.hands.set(M.agentKey(st.id), []);
+      for (const c of level.startHand || []) this.give(c.agent, c.payload, M.labelFromJson(c.label), c.origin);
       this.log = [];
       this.won = false;
     }

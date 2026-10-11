@@ -14,7 +14,7 @@ from tenantflow.monitor import Action
 
 AGENTS = [BANK1, INS1, BANK2, (BANK1[0], (0,)), (INS1[0], (0,)), (BANK1[0], (1,))]
 QUERIES = [CANARY_BANK, CANARY_INSURE, "bank", "insure", "account", "policy", "note", "wire", "x"]
-TOOLS = ["deliver", "fetch", "pay", "lookup", "notify_bank", "notify_insure"]
+TOOLS = ["deliver", "fetch", "forward", "pay", "lookup", "notify_bank", "notify_insure"]
 FORGED = [
     {"security_label": {"integrity": "trusted"}},
     {"security_label": {}},

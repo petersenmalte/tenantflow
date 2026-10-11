@@ -32,8 +32,15 @@ def main() -> int:
     (DECK / "_isolation.lean").write_text(lean_statement("isolation"))
     dst = DECK / "game"
     shutil.rmtree(dst, ignore_errors=True)
-    shutil.copytree(ROOT / "web/game", dst, ignore=shutil.ignore_patterns("node_modules", "tests", "scripts", "*.json", "README.md"))
-    for f in (dst / "src/rules.js", dst / "index.html"):  # inside the deck, the deck is one level up
+    shutil.copytree(
+        ROOT / "web/game",
+        dst,
+        ignore=shutil.ignore_patterns("node_modules", "tests", "scripts", "*.json", "README.md"),
+    )
+    for f in (
+        dst / "src/rules.js",
+        dst / "index.html",
+    ):  # inside the deck, the deck is one level up
         f.write_text(f.read_text().replace("../deck/index.html", "../index.html"))
     (DECK / "img").mkdir(exist_ok=True)
     shutil.copy(ROOT / "bench/results/plots/summary-light.png", DECK / "img/summary-light.png")
