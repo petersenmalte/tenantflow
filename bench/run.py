@@ -103,9 +103,10 @@ def latency(episodes: int, seed: int) -> dict:
 
 
 def latency_monitor_only(episodes: int, seed: int) -> dict:
-    """TenantFlow's monitor without the Cedar call (authorize stubbed to allow), same episodes as `latency`.
+    """TenantFlow's monitor with Cedar stubbed to "allow", same episodes as `latency` (S19).
 
-    Separates the monitor's own cost from Cedar's (S19); all decisions run the full flow checks."""
+    Separates the monitor's own cost from Cedar's. Decisions that end early (unknown agent or tool,
+    report/receive preconditions) are included, as in `latency`."""
     eps = [fuzz.episode(seed * 1_000_003 + i) for i in range(min(episodes, 200))]
     ts: list[int] = []
     for tr, steps in eps:
@@ -166,9 +167,15 @@ def main() -> None:
         print(k, {v: f"{res[k][v]['k']}/{res[k][v]['n']}" for v in VARIANTS})
     print("fuzz any", {v: res["fuzz"][v]["any"]["rate"] for v in VARIANTS})
     print("p50 us", {v: res["latency"][v]["p50_us"] for v in VARIANTS})
-    print("monitor only p50/p99 us", res["latency_monitor_only"]["p50_us"], res["latency_monitor_only"]["p99_us"])
+    print(
+        "monitor only p50/p99 us",
+        res["latency_monitor_only"]["p50_us"],
+        res["latency_monitor_only"]["p99_us"],
+    )
     if dirty:
-        print("WARNING: bench/ or python/src has uncommitted changes; meta.git does not identify the code")
+        print(
+            "WARNING: bench/ or python/src has uncommitted changes; meta.git does not identify the code"
+        )
 
 
 if __name__ == "__main__":
