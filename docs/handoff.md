@@ -2,10 +2,10 @@
 
 Overwritten at the end of every session. Keep it short; the next session reads only this, CLAUDE.md and TASKS.md.
 
-- **Last session:** S11 website integration (claude-opus-5-5, user's explicit choice). Homepage PR
-  petersenmalte/petersenmalte-homepage#16 (merged) adds `tenantflow.html`, an index icon and the deck/game build; live and checked on 2026-10-11.
-  All tasks except S6 (optional real-LLM run) are done. CI green; `lake build`, pytest (41, extras `mcp` + `fides`),
-  game tests (68) and `quarto render` pass.
+- **Last session:** S24 (claude-opus-5-5, user's request): deck without staged builds, new slide `#/glance`, game
+  links slides by id; homepage PR petersenmalte/petersenmalte-homepage#17 (project page summary + republished deck,
+  build from `74e742c`) waits for the owner's merge. Before that: S11 (homepage integration, PR #16, live).
+  Fable budget is used up (owner, 2026-10-11): F5 stays deferred.
 - **Open `sorry`s:** none.
 - **Next:** S6 only after the user approves API costs. After changing deck or game: `web/publish-homepage.sh
   ../petersenmalte-homepage`, run its `npm test`, commit there (details in `web/deck/README.md`).
