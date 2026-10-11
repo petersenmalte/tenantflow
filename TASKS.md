@@ -40,7 +40,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S13 | [SONNET] | S8 | done | CI never ran on GitHub: find the cause, add `workflow_dispatch`, get a first green run |
 | S14 | [SONNET] | – | done | Root README states "nothing proven yet": replace with the current state (polish stays in O2) |
 | S15 | [SONNET] | – | open | APIsec article never read (403): user reads it, verify our forgery cases and citations against it |
-| S16 | [SONNET] | S10 | open | Randomised differential test JS game monitor ↔ Lean oracle (as S3 for Python) |
+| S16 | [SONNET] | S10 | done | Randomised differential test JS game monitor ↔ Lean oracle (as S3 for Python) |
 | S17 | [SONNET] | S9 | open | Deck: navigation bug (only slide 1 reachable), redesign: interactive, staged, intuitive |
 | S18 | [SONNET] | S10, S16 | open | Game: redesign: intuitive, guided, animated; verify in a real browser |
 | S19 | [SONNET] | S5 | open | Benchmark: rerun on a clean commit; report monitor-only latency separately from Cedar |
@@ -185,6 +185,11 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 - S10 tested the JS monitor on only 9 traces (5 hand-written, 4 level scripts). Add a randomised corpus: generate
   ≥ 300 scenarios (reuse the Hypothesis strategies of `python/tests/test_differential.py`), store oracle outputs as
   fixtures (or run the oracle in CI), compare the JS monitor on all of them; also the 3 baselines vs Python.
+- Done (Opus): `web/game/scripts/gen_corpus.py` → `tests/fixtures/corpus.json.gz` (2900 scenarios, 18 746 steps,
+  derandomised); `tests/corpus.test.js` compares all four JS modes (TenantFlow vs oracle, baselines vs Python), all
+  agree. Finding: the S3 generator sends ~60 % of steps to unknown agents, so flow denials were rare; added
+  `scenarios_valid` (existing agents, mostly allow_all) and `test_python_matches_oracle_valid_agents` to
+  `python/tests/test_differential.py`. Flow denials "tainted write" and "requires trusted" are still rare (≈ 10 each).
 
 ### S17 [SONNET] Deck rework
 - Bug: `####` headings inside `.zone` divs become nested sections (22 `<section>`s instead of 11), so only the first

@@ -138,6 +138,44 @@ scenarios = st.builds(
 )
 
 
+# The generator above sends most steps to unknown agents ("9", random paths), so most decisions are
+# "unknown agent" denials. This variant uses existing roots and their first children only and mostly
+# allow_all, so that the flow checks themselves are exercised (S16 finding).
+valid_agents = st.builds(
+    lambda s, p: {"session": s, "path": p},
+    st.sampled_from(["1", "2", "3"]),
+    st.sampled_from([[], [], [], [], [0]]),
+)
+valid_actions = st.one_of(
+    actions,
+    st.builds(lambda t, a: {"op": "call", "tool": t, "args": a}, st.sampled_from(EXT), payloads),
+    st.builds(lambda q: {"op": "query", "q": q}, queries),
+)
+scenarios_valid = st.builds(
+    lambda sc, c, tr: {**sc, "cedar": c, "trace": tr},
+    scenarios,
+    st.one_of(st.just("allow_all"), st.just("allow_all"), cedar),
+    st.lists(
+        st.builds(lambda a, ac: {"agent": a, "action": ac}, valid_agents, valid_actions),
+        min_size=3,
+        max_size=25,
+    ),
+)
+
+
+@settings(
+    max_examples=int(os.environ.get("TF_EXAMPLES", 300)),
+    deadline=None,
+    suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large],
+)
+@given(scenarios_valid)
+def test_python_matches_oracle_valid_agents(sc):
+    exp = oracle(sc)
+    assert "error" not in exp, exp
+    got = run_scenario(sc)
+    assert normalise(got) == normalise(exp), json.dumps(sc)
+
+
 @settings(
     max_examples=int(os.environ.get("TF_EXAMPLES", 300)),
     deadline=None,
