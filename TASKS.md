@@ -37,8 +37,8 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | O2 | [OPUS] | all above | open | Final review: claims vs. proofs, README, limitations |
 | S11 | [SONNET] | O2 | open | Integrate deck and game into petersenmalte.de |
 | S12 | [SONNET] | F4 | open | Cite `Exec.noninterference` in deck, README and game; drop "F4 open" from the limitations slide |
-| S13 | [SONNET] | S8 | open | CI never ran on GitHub: find the cause, add `workflow_dispatch`, get a first green run |
-| S14 | [SONNET] | – | open | Root README states "nothing proven yet": replace with the current state (polish stays in O2) |
+| S13 | [SONNET] | S8 | done | CI never ran on GitHub: find the cause, add `workflow_dispatch`, get a first green run |
+| S14 | [SONNET] | – | done | Root README states "nothing proven yet": replace with the current state (polish stays in O2) |
 | S15 | [SONNET] | – | open | APIsec article never read (403): user reads it, verify our forgery cases and citations against it |
 | S16 | [SONNET] | S10 | open | Randomised differential test JS game monitor ↔ Lean oracle (as S3 for Python) |
 | S17 | [SONNET] | S9 | open | Deck: navigation bug (only slide 1 reachable), redesign: interactive, staged, intuitive |
@@ -167,6 +167,10 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 - `gh api repos/petersenmalte/tenantflow/actions/runs` → `total_count: 0` after ≥ 6 pushes since S8, workflow `ci` is
   `active`, Actions enabled. Every "CI checks X" statement is unbacked until a run is green.
 - Find the cause (repo/account settings, billing, workflow syntax), add `workflow_dispatch`, fix failing jobs.
+- Done (Opus): runs exist from `e5f6ec8` on and are green (jobs lean, python, game, deck; 44 theorem names checked
+  by `#print axioms`; 5 oracle traces; differential test with 100 examples). Cause of the missing earlier runs not
+  found (no settings change by Claude). `workflow_dispatch` added. Remaining skip in CI: the FIDES cross-check
+  (`agent-framework-core` extra not installed in CI), documented here.
 
 ### S14 [SONNET] Root README is wrong
 - `README.md` still says "Work in progress … Nothing in this repository is claimed to be proven yet." Replace it with
