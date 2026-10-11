@@ -27,7 +27,8 @@ node_modules/
 /web/deck/_site/
 *_files/
 
-# Personal German user guide, not part of the public repository
+# Personal German user guide, not part of the public repository (GUIDE.md is the public English version)
+/ANLEITUNG.md
 
 # OS / editor
 .DS_Store

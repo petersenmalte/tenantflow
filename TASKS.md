@@ -45,7 +45,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S18 | [SONNET] | S10, S16 | done | Game: redesign: intuitive, guided, animated; verify in a real browser |
 | S19 | [SONNET] | S5 | done | Benchmark: rerun on a clean commit; report monitor-only latency separately from Cedar |
 | S20 | [SONNET] | S2 | open | Decide/close S2 gaps: Cedar schema via cedar-for-agents generator, gateway as real MCP |
-| S21 | [SONNET] | – | open | `.gitignore`: dangling comment "Personal German user guide" without a pattern |
+| S21 | [SONNET] | – | done | `.gitignore`: dangling comment "Personal German user guide" without a pattern |
 | F5 | [FABLE] | F3 | deferred (user: budget goes to F6 + F7) | (b1) on `Exec`: decisions and labels are independent of payload content (forgery claim at code level) |
 | F6 | [FABLE] | F3 | open | Transparency (utility) theorem: single-tenant trusted workflows are never denied by the flow monitor |
 | F7 | [FABLE] | S17, S18, F6 | open | Claim review: every statement in deck, game and README is covered exactly by a theorem (≈ 2–3 USD) |
@@ -243,6 +243,7 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 ### S21 [SONNET] `.gitignore`
 - Comment "Personal German user guide, not part of the public repository" has no pattern. Ask the user which file
   is meant (`GUIDE.md` is tracked on purpose as the English operator guide).
+- Done (Opus): the pattern `/ANLEITUNG.md` (from S0) was dropped in `92e6c77` when GUIDE.md was added; restored.
 
 ### F5 [FABLE] (b1) payload independence on `Exec`
 - Dropped in F1b by the cost rule. Statement: two `Exec` states/actions that differ only in payloads give the same
