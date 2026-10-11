@@ -64,15 +64,19 @@ attaches them only from trusted metadata (theorem (b)).
 
 ## APIsec Labs: label forgery in FIDES
 
-*Trust Me, Bro: Forging Security Labels in Microsoft's FIDES Middleware* (APIsec Research Labs).
+B. Kaur, *Trust Me, Bro: Forging Security Labels in Microsoft's FIDES Middleware*, APIsec Research Labs, 2026-09-01.
 <https://labs.apisec.ai/research/articles/trust-me-bro-forging-security-labels-fides>
-According to the project brief, the analysis shows that the middleware accepts a `security_label` field inside
-attacker-controlled payloads and that content without a label defaults to `trusted`. *The article could not be
-fetched when this file was written (HTTP 403); the exact affected version and the current fix status must be
-verified in task S4 before the baseline is pinned.*
+For a tool without a `source_integrity` declaration, the FIDES label-tracking middleware derives the result label from
+`security_label` dicts found in the tool's call arguments, and `ContentLabel.from_dict` defaults missing fields to
+`trusted`, so attacker-written data can mint a trusted label. MSRC (case 126767) confirmed the forgery primitive and
+closed it as defense-in-depth without a CVE; a policy bypass requires `auto_hide_untrusted=False` and a context that is
+not yet untrusted (the context label is join-only). Confirmed against agent-framework-core 1.11.0–1.15.0; the same
+argument scan is in 1.5.0, which our baseline re-implements (`bench/README.md`). Read by the user and checked against the
+1.5.0 source in task S15.
 
-*Relation:* defines the attack class (b1) and (b1-default) in `docs/spec.md` rule out. Reproduced only locally
-against our own setup (`CLAUDE.md` §8).
+*Relation:* the attack class that TenantFlow's (b) `Model.no_launder` rules out: labels are computed from registry labels
+only, payloads never enter a label. Reproduced only locally against our own re-implementation (`CLAUDE.md` §8):
+benchmark suite 2 and game level 3.
 
 ## APPA – recoverable IFC
 

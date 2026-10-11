@@ -39,7 +39,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S12 | [SONNET] | F4 | done | Cite `Exec.noninterference` in deck, README and game; drop "F4 open" from the limitations slide |
 | S13 | [SONNET] | S8 | done | CI never ran on GitHub: find the cause, add `workflow_dispatch`, get a first green run |
 | S14 | [SONNET] | – | done | Root README states "nothing proven yet": replace with the current state (polish stays in O2) |
-| S15 | [SONNET] | – | open | APIsec article never read (403): user reads it, verify our forgery cases and citations against it |
+| S15 | [SONNET] | – | done | APIsec article never read (403): user reads it, verify our forgery cases and citations against it |
 | S16 | [SONNET] | S10 | done | Randomised differential test JS game monitor ↔ Lean oracle (as S3 for Python) |
 | S17 | [SONNET] | S9 | done | Deck: navigation bug (only slide 1 reachable), redesign: interactive, staged, intuitive |
 | S18 | [SONNET] | S10, S16 | done | Game: redesign: intuitive, guided, animated; verify in a real browser |
@@ -181,6 +181,13 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 - The article returned HTTP 403 in S4; it is still cited in `docs/related-work.md`, `bench/README.md`, the deck.
   The user reads it in a browser; check that suite 2 (forgery) and the FIDES re-implementation match what it
   describes, and fix or qualify the citations. CLAUDE.md §8.
+- Done (Opus, article pasted by the user): the S4 baseline modelled the forgery in the wrong place (a `security_label`
+  inside a tool *result* overriding the declared source); 1.5.0 serialises such results to text. Real path (checked
+  in the installed 1.5.0 source): tier 3 argument scan for tools without `source_integrity`, join-only context,
+  `auto_hide_untrusted`. Baseline (Python + JS), suite 2 (now 5 cases: 2 PoC cases succeed for FIDES, default /
+  monotone / control fail), game level 3, deck slide 5, `docs/related-work.md`, `bench/README.md` rewritten; argument
+  scan cross-checked against the real package. Benchmark rerun on clean `448e0b5`: FIDES forgery 2/5, utility 7/8
+  (hiding prevents reading fetched content).
 
 ### S16 [SONNET] Differential test JS ↔ oracle
 - S10 tested the JS monitor on only 9 traces (5 hand-written, 4 level scripts). Add a randomised corpus: generate

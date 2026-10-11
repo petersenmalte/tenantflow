@@ -2,61 +2,65 @@
  "forgery": {
   "cedar-only": {
    "ci95": [
-    0.5101,
+    0.5655,
     1.0
    ],
-   "k": 4,
-   "n": 4,
+   "k": 5,
+   "n": 5,
    "per_scenario": {
-    "2a-forged-tool-result": true,
-    "2b-forged-document": true,
-    "2c-missing-field-default": true,
-    "2d-unlabelled-untrusted": true
+    "2a-argument-label-poc": true,
+    "2b-missing-field-default": true,
+    "2c-default-hiding": true,
+    "2d-monotone-context": true,
+    "2e-unlabelled-control": true
    },
    "rate": 1.0
   },
   "fides": {
    "ci95": [
-    0.3006,
-    0.9544
+    0.1176,
+    0.7693
    ],
-   "k": 3,
-   "n": 4,
+   "k": 2,
+   "n": 5,
    "per_scenario": {
-    "2a-forged-tool-result": true,
-    "2b-forged-document": true,
-    "2c-missing-field-default": true,
-    "2d-unlabelled-untrusted": false
+    "2a-argument-label-poc": true,
+    "2b-missing-field-default": true,
+    "2c-default-hiding": false,
+    "2d-monotone-context": false,
+    "2e-unlabelled-control": false
    },
-   "rate": 0.75
+   "rate": 0.4
   },
   "none": {
    "ci95": [
-    0.5101,
+    0.5655,
     1.0
    ],
-   "k": 4,
-   "n": 4,
+   "k": 5,
+   "n": 5,
    "per_scenario": {
-    "2a-forged-tool-result": true,
-    "2b-forged-document": true,
-    "2c-missing-field-default": true,
-    "2d-unlabelled-untrusted": true
+    "2a-argument-label-poc": true,
+    "2b-missing-field-default": true,
+    "2c-default-hiding": true,
+    "2d-monotone-context": true,
+    "2e-unlabelled-control": true
    },
    "rate": 1.0
   },
   "tenantflow": {
    "ci95": [
     0.0,
-    0.4899
+    0.4345
    ],
    "k": 0,
-   "n": 4,
+   "n": 5,
    "per_scenario": {
-    "2a-forged-tool-result": false,
-    "2b-forged-document": false,
-    "2c-missing-field-default": false,
-    "2d-unlabelled-untrusted": false
+    "2a-argument-label-poc": false,
+    "2b-missing-field-default": false,
+    "2c-default-hiding": false,
+    "2d-monotone-context": false,
+    "2e-unlabelled-control": false
    },
    "rate": 0.0
   }
@@ -65,82 +69,82 @@
   "cedar-only": {
    "any": {
     "ci95": [
-     0.9949,
-     0.9992
+     0.9942,
+     0.9989
     ],
-    "k": 1996,
-    "rate": 0.998
+    "k": 1995,
+    "rate": 0.9975
    },
    "confidentiality": {
     "ci95": [
-     0.9949,
-     0.9992
+     0.9921,
+     0.998
     ],
-    "k": 1996,
-    "rate": 0.998
+    "k": 1992,
+    "rate": 0.996
    },
    "episodes": 2000,
    "integrity": {
     "ci95": [
-     0.081,
-     0.1065
+     0.1193,
+     0.1491
     ],
-    "k": 186,
-    "rate": 0.093
+    "k": 267,
+    "rate": 0.1335
    }
   },
   "fides": {
    "any": {
     "ci95": [
-     0.9949,
-     0.9992
+     0.9928,
+     0.9983
     ],
-    "k": 1996,
-    "rate": 0.998
+    "k": 1993,
+    "rate": 0.9965
    },
    "confidentiality": {
     "ci95": [
-     0.9949,
-     0.9992
+     0.9921,
+     0.998
     ],
-    "k": 1996,
-    "rate": 0.998
+    "k": 1992,
+    "rate": 0.996
    },
    "episodes": 2000,
    "integrity": {
     "ci95": [
-     0.0454,
-     0.0653
+     0.0143,
+     0.0265
     ],
-    "k": 109,
-    "rate": 0.0545
+    "k": 39,
+    "rate": 0.0195
    }
   },
   "none": {
    "any": {
     "ci95": [
-     0.9949,
-     0.9992
+     0.9942,
+     0.9989
     ],
-    "k": 1996,
-    "rate": 0.998
+    "k": 1995,
+    "rate": 0.9975
    },
    "confidentiality": {
     "ci95": [
-     0.9949,
-     0.9992
+     0.9921,
+     0.998
     ],
-    "k": 1996,
-    "rate": 0.998
+    "k": 1992,
+    "rate": 0.996
    },
    "episodes": 2000,
    "integrity": {
     "ci95": [
-     0.081,
-     0.1065
+     0.1193,
+     0.1491
     ],
-    "k": 186,
-    "rate": 0.093
+    "k": 267,
+    "rate": 0.1335
    }
   },
   "tenantflow": {
@@ -173,40 +177,40 @@
  },
  "latency": {
   "cedar-only": {
-   "mean_us": 59.32,
+   "mean_us": 62.9,
    "n": 6000,
-   "p50_us": 100.83,
-   "p95_us": 107.79,
-   "p99_us": 112.25
+   "p50_us": 106.25,
+   "p95_us": 112.5,
+   "p99_us": 116.25
   },
   "fides": {
-   "mean_us": 60.09,
+   "mean_us": 63.86,
    "n": 6000,
-   "p50_us": 101.88,
-   "p95_us": 109.96,
-   "p99_us": 114.83
+   "p50_us": 107.33,
+   "p95_us": 114.12,
+   "p99_us": 117.54
   },
   "none": {
    "mean_us": 0.99,
    "n": 6000,
-   "p50_us": 0.46,
-   "p95_us": 4.33,
-   "p99_us": 6.92
+   "p50_us": 0.5,
+   "p95_us": 4.38,
+   "p99_us": 7.04
   },
   "tenantflow": {
-   "mean_us": 59.32,
+   "mean_us": 62.81,
    "n": 6000,
-   "p50_us": 101.25,
-   "p95_us": 107.54,
-   "p99_us": 112.17
+   "p50_us": 106.92,
+   "p95_us": 111.29,
+   "p99_us": 114.88
   }
  },
  "latency_monitor_only": {
-  "mean_us": 0.87,
+  "mean_us": 0.86,
   "n": 6000,
   "p50_us": 0.46,
-  "p95_us": 3.62,
-  "p99_us": 6.12
+  "p95_us": 3.67,
+  "p99_us": 6.25
  },
  "leak": {
   "cedar-only": {
@@ -275,11 +279,11 @@
   }
  },
  "meta": {
-  "date": "2026-10-11T11:22:21+00:00",
+  "date": "2026-10-11T11:40:44+00:00",
   "dirty": false,
   "episode_length": 30,
   "episodes": 2000,
-  "git": "5275c58",
+  "git": "448e0b5",
   "machine": "arm64",
   "python": "3.15.0",
   "seed": 1,
@@ -312,14 +316,14 @@
   },
   "fides": {
    "ci95": [
-    0.6756,
-    1.0
+    0.5291,
+    0.9776
    ],
-   "k": 8,
+   "k": 7,
    "n": 8,
    "per_scenario": {
     "3a-roundtrip": true,
-    "3b-fetch-then-deliver": true,
+    "3b-fetch-then-deliver": false,
     "3c-delegation": true,
     "3d-two-tenants": true,
     "3e-trusted-tool": true,
@@ -327,7 +331,7 @@
     "3g-trusted-lookup": true,
     "3h-shared-team-doc": true
    },
-   "rate": 1.0
+   "rate": 0.875
   },
   "none": {
    "ci95": [
