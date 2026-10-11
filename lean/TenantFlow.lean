@@ -5,3 +5,4 @@ import TenantFlow.Proofs.Noninterference
 import TenantFlow.Proofs.Refinement
 
 import TenantFlow.Proofs.NoninterferenceExec
+import TenantFlow.Proofs.Transparency
