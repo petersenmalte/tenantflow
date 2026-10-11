@@ -24,11 +24,12 @@ Overwritten at the end of every session. Keep it short; the next session reads o
     `_isolation.lean` are committed and checked by `python/tests/test_deck.py`.
   - CI picks the `#print axioms` names from the `proven`/`defined` rows of `docs/proof-status.md`
     (`scripts/check-lean.sh`); every `Model.*`/`Exec.*` name in those rows must resolve.
-  - Benchmark results are from clean commit `5275c58` (`meta.dirty = false`).
+  - Run the benchmark only on a pushed commit (`git pull --rebase && git push` first): a rebase changes hashes.
 - **Deviations and limits** (details in the READMEs of `web/game`, `web/deck`, `bench`):
   - Game and deck checked in headless Chrome (desktop, 390 px phone, dark mode, real mouse drag); no screen-reader or
     real-touch test, deck not tried on a projector.
   - Level 2 under TenantFlow: the write is allowed, the search filters (brief said "blocks step 2").
   - Sandbox has no vault tool (registry error, assumption A2). Fuzzer = bounded search, not a proof.
-  - FIDES = re-implementation of agent-framework-core 1.5.0 label logic; APIsec article still unread (S15).
-  - CI: FIDES cross-check test skipped (extra not installed); cause of the missing CI runs before `e5f6ec8` unknown.
+  - FIDES = re-implementation of the agent-framework-core 1.5.0 label logic, corrected in S15: the forgery is the
+    tier-3 argument scan; a bypass needs the APIsec PoC conditions. Benchmark FIDES forgery 2/5, utility 7/8.
+  - Benchmark results from pushed commit `8caa375`. Cause of the missing CI runs before `e5f6ec8` unknown.
