@@ -92,7 +92,7 @@ Protection switch: off / Cedar / FIDES / TenantFlow.
 | Level | Attempt | Lesson |
 |---|---|---|
 | 1 | Read the other tenant's data directly | Cedar already blocks this |
-| 2 | Read bank data, write it to the shared index, query as insurer | Every call is Cedar-allowed; TenantFlow blocks step 2 |
+| 2 | Read bank data, write it to the shared index, query as insurer | Every call is Cedar-allowed; TenantFlow blocks step 2 (as built in S10: the write is allowed and labelled, the insurer's query does not return it; see `web/game/README.md`) |
 | 3 | Smuggle data with a forged `security_label` in a ticket | FIDES accepts it; TenantFlow ignores labels from data |
 | 4 | Delegate to a sub-agent with more rights | Labels travel with the delegation |
 | 5 | Sandbox: write policies, run the fuzzer | A found leak is shown as a concrete call sequence |

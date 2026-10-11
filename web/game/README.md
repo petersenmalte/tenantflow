@@ -23,6 +23,8 @@ links the Lean theorem and the deck slide (deck links are placeholders until the
 * In level 2 the write step is *allowed* under TenantFlow; the leak is stopped at the query, because the document keeps
   the bank's label.
 
+* Not yet checked in a real browser (layout, dark mode, keyboard use): the UI was smoke-tested with a fake DOM in Node only.
+
 ## Tests
 `npm test` (Node ≥ 20) checks the JS monitor against
 1. the five hand-written Lean oracle traces (`lean/Oracle/tests`), exact equality;

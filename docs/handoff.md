@@ -1,8 +1,8 @@
 # Handoff
 
-- **Last task:** S10 – browser game (done): see `web/game/README.md`; `npm test` green, CI `game` job has a lockfile.
 Overwritten at the end of every session. Keep it short; the next session reads only this, CLAUDE.md and TASKS.md.
 
+- **Last task:** S10 – browser game (done): see `web/game/README.md`; `npm test` green, CI `game` job has a lockfile.
 - **Model:** claude-sonnet-5-5
 - **State:** `python/src/tenantflow/` has `monitor` (port of `Exec.step`, `run_scenario` = oracle format),
   `adapter` (RAG index), `cedar` (cedarpy authorizer), `gateway` (JSON-RPC proxy), `example_server`.
@@ -16,3 +16,9 @@ Overwritten at the end of every session. Keep it short; the next session reads o
 - **S8:** CI not yet observed on GitHub (first run happens on push); check the Actions tab / `gh run list`.
 
 - **Next task:** S9 [SONNET] Quarto deck (the game's "Why?" links expect slide order of the brief, see TASKS.md S10 notes); then O2. S6 only after asking the user.
+- **S10 deviations and limits:** (1) Level 2: under TenantFlow the write is allowed and the leak is stopped at the query
+  (label + filter), unlike the brief's "blocks step 2". (2) Sandbox has no `vault` tool: a bank-labelled tool callable by an
+  insurer principal is a registry error (A2), not caught by the monitor. (3) Fuzzer = bounded search, not a proof.
+  (4) FIDES mode is a re-implementation. (5) "Why?" deck links are placeholders until S9 (`rules.js`, `slide(...)`).
+  (6) The UI was only smoke-tested with a fake DOM in Node, **not in a real browser** (Chrome extension was not connected): open
+  `web/game/index.html` and check layout, dark mode, level 5 before publishing (S11).
