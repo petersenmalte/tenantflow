@@ -74,3 +74,6 @@ latency:
   tenantflow:
     p50: "101"
     p99: "112"
+monitor_only:
+  p50: "0.5"
+  p99: "6.1"
