@@ -49,7 +49,8 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | F5 | [FABLE] | F3 | deferred (user: budget goes to F6 + F7) | (b1) on `Exec`: decisions and labels are independent of payload content (forgery claim at code level) |
 | F6 | [FABLE] | F3 | done | Transparency (utility) theorem: single-tenant trusted workflows are never denied by the flow monitor |
 | S22 | [SONNET] | F6 | done | Cite theorem (e) `Model.transparency` in deck, game "Warum?" panel and README; regenerate `web/game/src/theorems.js` |
-| F7 | [FABLE] | S17, S18, F6 | open | Claim review: every statement in deck, game and README is covered exactly by a theorem (≈ 2–3 USD) |
+| F7 | [FABLE] | S17, S18, F6 | done | Claim review: every statement in deck, game and README is covered exactly by a theorem (≈ 2–3 USD) |
+| S23 | [SONNET] | F7 | open | Apply the F7 claim-review fixes to README, deck and game; gateway returns `denied` without reason to the agent |
 
 ---
 
@@ -377,3 +378,22 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
   `npm ci && npm test` in `web/game` once it has a `package.json`; S10 must provide an `npm test`).
 - `scripts/check-lean.sh`: no `sorry`/`admit`/`axiom` in `lean/TenantFlow`, `TenantFlow.lean`, `lean/Oracle`; `#print axioms` for every
   `Model.*`/`Exec.*` name in the "proven"/"defined" rows of `docs/proof-status.md` (unknown names fail, so the doc cannot drift).
+
+### S23 [SONNET] Apply the F7 claim-review fixes
+- Source: `docs/claim-review.md` §1 (findings 1–7 with exact locations and replacement wording). Theorem statements and
+  `lean/` stay untouched; only wording, citations and one gateway change.
+- Text: deck `web/deck/index.qmd:184` ((e) "never blocked by the monitor" → "never denied by the flow checks; Cedar
+  and missing preconditions can still deny") and `:239` (add "and call only tenant-private tools"); README row (e)
+  (denial list: Cedar, unregistered tool, missing session/parent/child) and row (b) (add: payload independence of the
+  executable monitor is by construction + tested, (b1) not a theorem); game `src/rules.js:100` (cite `Model.no_launder`
+  with `Model.isolation_int`) and `:102` (cite `Model.no_launder` instead of `Model.isolation`).
+- Assumption lists (README, deck slide 7, `web/game/src/game.js:94`, `src/levels.js:114`, `web/game/README.md:50`):
+  add stateless tools (A4), Cedar sees only principal and action (A7), data-independent scheduling (A5), agents do not
+  see denial reasons (A8) – or cite "A1–A8 in `docs/spec.md` §9".
+- Gateway (finding 6): the agent-visible response of the Python gateway/MCP gateway carries only `denied`; the reason
+  goes to the log / `tenantflow check` output. Keep the reason in the oracle format and the differential tests
+  (`docs/oracle-format.md` unchanged). Add a test. If this changes `web/game/src/monitor.js` behaviour, keep the game's
+  "Warum?" panel working (it reads `resp.reason` locally, which is fine: the panel is the operator view).
+- Regenerate `web/game/src/theorems.js` only if `lean/` line numbers changed (they did not in F7). Render the deck once.
+- DoD: `uv run pytest -q`, game tests, `quarto render` pass; `docs/claim-review.md` §1 fixes all marked done in a
+  short note at the top of that file.

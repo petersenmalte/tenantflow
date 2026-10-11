@@ -2,34 +2,25 @@
 
 Overwritten at the end of every session. Keep it short; the next session reads only this, CLAUDE.md and TASKS.md.
 
-- **Last session:** F6 (claude-fable-5-1). Theorem (e) transparency proven: `docs/spec.md` §7.8 (new) and §7.6
-  (updated), changelog 0.3; `lean/TenantFlow/Proofs/Transparency.lean` (new, registered in `lean/TenantFlow.lean`);
-  `docs/proof-status.md` rows added; `Model/` unchanged. Fable spend before F6: 44 USD (user enters the spend after
-  F6 in `docs/fable-budget.md`).
+- **Last session:** F7 (claude-fable-5-1). Claim review of README, deck and game against the Lean statements:
+  `docs/claim-review.md` (7 findings: 1 overstated, 5 incomplete hypotheses/assumptions, 1 loose citation; the rest
+  is covered exactly). No theorem statement changed, `lean/` untouched. Spec §9 gained **A8** (agents do not observe
+  denial reasons; implicit in `Exec.run`'s `⌊·⌋`), changelog row added. Fable spend before F7: 50 USD (user enters
+  the spend after F7 in `docs/fable-budget.md`).
 - **Open `sorry`s:** none.
 - **Next:**
-  1. **S22 [SONNET]** cite theorem (e) in deck, game, README (statement and hypotheses in `TASKS.md` S22 / spec §7.8).
-  2. **F7 [FABLE]** claim review of deck, game, README (≈ 2–3 USD; hard stop 55 USD). Best after S22 so that (e) is
-     already cited and F7 only checks.
-  3. S15 (user reads the APIsec article), S20 (decide on the S2 gaps).
-  4. O2 [OPUS] final review, then S11 (website; ask for the repo location). S6 only after asking (API costs).
+  1. **S23 [SONNET]** apply the F7 fixes (exact locations and wording in `docs/claim-review.md` §1 / `TASKS.md` S23),
+     including the gateway change: agent sees `denied` only, reason goes to the log.
+  2. O2 [OPUS] final review (after S23), then S11 (website; ask for the repo location). S6 only after asking.
+  3. F5 stays deferred (budget). Remaining Fable budget after F7 is reserve for fixes found by differential testing.
 - **Know before editing:**
-  - Theorem (e) hypotheses (do not overclaim): agent context `Single t` (= `rootCtx t` up to extensionality), tool
-    tenant-private (`observers ⊆ {t}`); then denial ⇔ a label-free precondition fails (Cedar, unregistered or
-    non-private tool, `report` without parent, `receive` of a missing child). Preservation (`Single.step`) is per
-    step with data hypotheses; there is **no** trace-level "always `Single`" invariant.
+  - Do not overclaim (e): hypotheses `Single t ctx` **and** tenant-private tool; a `Single` agent can still be denied
+    by Cedar, an unregistered tool, a missing session/parent/child. "Never denied by the flow checks" is the correct
+    phrase, "never blocked by the monitor" is not.
+  - (b) at model level = `Model.no_launder` (pointwise ⊑ incl. integrity, so untrusted origins force untrusted
+    objects; holds on `Exec` traces via `Exec.refines_ghost`). Payload independence of the executable monitor ((b1),
+    "labels in data are ignored") is by construction + tested, not a theorem.
+  - Assumption lists must name A1–A8 (A4 stateless tools, A7 Cedar inputs and A8 were missing everywhere).
   - Game (`web/game`): logic `src/play.js`, view `src/board.js` (also used by the deck), monitor `src/monitor.js`.
     After changing levels or `lean/`, regenerate fixtures and `src/theorems.js` (commands in `web/game/README.md`).
-  - Deck (`web/deck`): render the project (`quarto render` in `web/deck`), not the single file; `_variables.yml` and
-    `_isolation.lean` are committed and checked by `python/tests/test_deck.py`.
-  - CI picks the `#print axioms` names from the `proven`/`defined` rows of `docs/proof-status.md`
-    (`scripts/check-lean.sh`); every `Model.*`/`Exec.*` name in those rows must resolve.
-  - Run the benchmark only on a pushed commit (`git pull --rebase && git push` first): a rebase changes hashes.
-- **Deviations and limits** (details in the READMEs of `web/game`, `web/deck`, `bench`):
-  - Game and deck checked in headless Chrome (desktop, 390 px phone, dark mode, real mouse drag); no screen-reader or
-    real-touch test, deck not tried on a projector.
-  - Level 2 under TenantFlow: the write is allowed, the search filters (brief said "blocks step 2").
-  - Sandbox has no vault tool (registry error, assumption A2). Fuzzer = bounded search, not a proof.
-  - FIDES = re-implementation of the agent-framework-core 1.5.0 label logic, corrected in S15: the forgery is the
-    tier-3 argument scan; a bypass needs the APIsec PoC conditions. Benchmark FIDES forgery 2/5, utility 7/8.
-  - Benchmark results from pushed commit `8caa375`. Cause of the missing CI runs before `e5f6ec8` unknown.
+  - Deck (`web/deck`): render the project (`quarto render` in `web/deck`), not the single file.
