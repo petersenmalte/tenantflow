@@ -23,5 +23,13 @@ variables or the Lean statement are stale or a slide uses an unknown variable. C
   is task S19.
 * "FIDES" is our re-implementation of the label logic of agent-framework-core 1.5.0. The APIsec article is cited but
   was not readable (HTTP 403, task S15).
-* The game links to slides by number (`../deck/index.html#/N`); a deployment that moves the deck must keep that path
-  (task S11).
+* The game links to slides by number (`../deck/index.html#/N`; inside the deck's copy `../index.html#/N`). Online, only
+  `_site/` is published (deck with its game copy), so the inner link is the one used; see "Publishing" below.
+
+## Publishing on petersenmalte.de (S11)
+
+`web/publish-homepage.sh <homepage checkout>` renders this project and copies `_site/` (without source maps) to
+`projects/tenantflow/` in the `petersenmalte-homepage` repository and writes the tenantflow commit to `REVISION` there.
+The project page `tenantflow.html` and the link tests (`tests/tenantflow.spec.js`) live in that repository; commit,
+test and push there. Online: <https://petersenmalte.de/tenantflow> (slides under `/projects/tenantflow/`, game under
+`/projects/tenantflow/game/`). The build is a copy: after changing deck or game, publish again.

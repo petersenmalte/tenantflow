@@ -2,12 +2,13 @@
 
 Overwritten at the end of every session. Keep it short; the next session reads only this, CLAUDE.md and TASKS.md.
 
-- **Last session:** O2 final review (claude-opus-5-5), including S23 (F7 claim-review fixes). All tasks except S11
-  (website) and S6 (optional real-LLM run) are done. CI green; `lake build`, pytest (41, extras `mcp` + `fides`),
+- **Last session:** S11 website integration (claude-opus-5-5, user's explicit choice). Homepage PR
+  petersenmalte/petersenmalte-homepage#16 adds `tenantflow.html` and the deck/game build; online after the owner merges it.
+  All tasks except S6 (optional real-LLM run) are done. CI green; `lake build`, pytest (41, extras `mcp` + `fides`),
   game tests (68) and `quarto render` pass.
 - **Open `sorry`s:** none.
-- **Next:** S11 [SONNET] – integrate deck and game into petersenmalte.de (ask the user for the repository location).
-  S6 only after the user approves API costs.
+- **Next:** S6 only after the user approves API costs. After changing deck or game: `web/publish-homepage.sh
+  ../petersenmalte-homepage`, run its `npm test`, commit there (details in `web/deck/README.md`).
 - **Know before editing:**
   - Claims: every guarantee sentence in README, deck and game is checked in `docs/claim-review.md`; changing wording
     means re-checking against `docs/spec.md` §7 and the assumptions A1–A8 (§9).

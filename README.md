@@ -12,6 +12,8 @@ proofs; a Python gateway (MCP), a benchmark, a slide deck and a browser game bui
 
 ## Five-minute tour
 
+Online without installing anything: <https://petersenmalte.de/tenantflow> (project page, slides and game).
+
 | Minutes | Do | You see |
 |---|---|---|
 | 2 | Open `web/game/index.html` in a browser (no server, no install) | Play a hijacked agent; switch protection between Off, Cedar, FIDES and TenantFlow and watch the same attack leak or bounce back |

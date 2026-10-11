@@ -35,7 +35,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S9 | [SONNET] | S5 | done | Quarto slide deck |
 | S10 | [SONNET] | S3, S5 | done | Browser game "Leak the Vault" |
 | O2 | [OPUS] | all above | done | Final review: claims vs. proofs, README, limitations |
-| S11 | [SONNET] | O2 | open | Integrate deck and game into petersenmalte.de |
+| S11 | [SONNET] | O2 | done | Integrate deck and game into petersenmalte.de |
 | S12 | [SONNET] | F4 | done | Cite `Exec.noninterference` in deck, README and game; drop "F4 open" from the limitations slide |
 | S13 | [SONNET] | S8 | done | CI never ran on GitHub: find the cause, add `workflow_dispatch`, get a first green run |
 | S14 | [SONNET] | – | done | Root README states "nothing proven yet": replace with the current state (polish stays in O2) |
@@ -345,10 +345,19 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
   "readable by", FIDES relation in `docs/related-work.md`, benchmark plot's hard-coded n.
 - README rewritten for a first-time reader: five-minute tour (commands verified), proven / tested / measured,
   limitations, related work with links, repository map. Deck slides 8 and 10 made to fit (checked in headless Chrome).
-- Open for the owner: S11 (website; repository location needed), S6 only with API budget.
+- Open for the owner: S6 only with API budget.
 
 ### S11 [SONNET] Website integration
 - Add a project page to petersenmalte.de (separate repository; ask the user for its location).
+
+### S11 – done (notes; worked by claude-opus-5-5 at the user's explicit request)
+- Homepage repo `petersenmalte/petersenmalte-homepage` (static GitHub Pages): `tenantflow.html` (project page, wording
+  from the claim-reviewed README, theorem names with assumptions), reachable via `cd tenantflow` in the site's terminal
+  like `education`/`work` (not linked from the index, following the site's convention); `projects/tenantflow/` = deck
+  `_site/` incl. game copy; Playwright tests `tests/tenantflow.spec.js`. Delivered as PR #16 (merge = deploy).
+- `web/publish-homepage.sh` here renders the deck and copies the build; `REVISION` records the source commit.
+- Limits: the published build is a copy and goes stale when deck or game change (publish again); MathJax comes from a
+  CDN; checked with Playwright/Chromium only (desktop and 390 px, light and dark).
 
 ### S2 – done (notes)
 - `python/src/tenantflow/{monitor,adapter,cedar,gateway,example_server}.py`, tests in `python/tests/test_monitor.py`.
