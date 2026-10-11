@@ -102,6 +102,29 @@ def latency(episodes: int, seed: int) -> dict:
     return out
 
 
+def latency_monitor_only(episodes: int, seed: int) -> dict:
+    """TenantFlow's monitor without the Cedar call (authorize stubbed to allow), same episodes as `latency`.
+
+    Separates the monitor's own cost from Cedar's (S19); all decisions run the full flow checks."""
+    eps = [fuzz.episode(seed * 1_000_003 + i) for i in range(min(episodes, 200))]
+    ts: list[int] = []
+    for tr, steps in eps:
+        mon = make("tenantflow", tr)
+        mon.authorize = lambda role, action: True
+        for a, act in steps:
+            t0 = time.perf_counter_ns()
+            mon.step(a, act)
+            ts.append(time.perf_counter_ns() - t0)
+    us = sorted(t / 1000 for t in ts)
+    return {
+        "n": len(us),
+        "mean_us": round(statistics.fmean(us), 2),
+        "p50_us": round(us[len(us) // 2], 2),
+        "p95_us": round(us[min(len(us) - 1, int(0.95 * len(us)))], 2),
+        "p99_us": round(us[min(len(us) - 1, int(0.99 * len(us)))], 2),
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--episodes", type=int, default=2000)
@@ -110,8 +133,17 @@ def main() -> None:
     rev = subprocess.run(
         ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=False
     ).stdout.strip()
+    dirty = bool(
+        subprocess.run(
+            ["git", "status", "--porcelain", "--", "bench", "python/src"],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+    )
     res = {
         "meta": {
+            "dirty": dirty,
             "date": datetime.now(UTC).isoformat(timespec="seconds"),
             "git": rev,
             "python": platform.python_version(),
@@ -126,6 +158,7 @@ def main() -> None:
         "utility": scripted(suites.SUITE3),
         "fuzz": fuzzing(args.episodes, args.seed),
         "latency": latency(args.episodes, args.seed),
+        "latency_monitor_only": latency_monitor_only(args.episodes, args.seed),
     }
     RESULTS.mkdir(exist_ok=True)
     (RESULTS / "results.json").write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
@@ -133,6 +166,9 @@ def main() -> None:
         print(k, {v: f"{res[k][v]['k']}/{res[k][v]['n']}" for v in VARIANTS})
     print("fuzz any", {v: res["fuzz"][v]["any"]["rate"] for v in VARIANTS})
     print("p50 us", {v: res["latency"][v]["p50_us"] for v in VARIANTS})
+    print("monitor only p50/p99 us", res["latency_monitor_only"]["p50_us"], res["latency_monitor_only"]["p99_us"])
+    if dirty:
+        print("WARNING: bench/ or python/src has uncommitted changes; meta.git does not identify the code")
 
 
 if __name__ == "__main__":
