@@ -26,7 +26,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S3 | [SONNET] | S1, S2 | done | Differential testing Python ↔ Lean oracle |
 | F2 | [FABLE] | F1b | done | Theorem (c) noninterference for the shared RAG index |
 | F3 | [FABLE] | F2 (or G2 fallback) | done | Theorem (d) refinement: executable monitor implements the model |
-| F4 | [FABLE] | F3, S1 | open (optional) | Lift (c) to `Exec` traces: `Exec.run`, `obs` commutes with `α` – only if budget allows, not needed for the deck |
+| F4 | [FABLE] | F3, S1 | done | Lift (c) to `Exec` traces: `Exec.run`, `obs` commutes with `α` (`Exec.noninterference`) |
 | S4 | [SONNET] | S2 | done | Baselines: none, Cedar-only, FIDES middleware |
 | S5 | [SONNET] | S3, S4 | done | Benchmark suites, adversarial fuzzing agent, latency, plots |
 | S6 | [SONNET] | S5 | open | OPTIONAL – small real-LLM utility run (ask user first, costs API money) |
@@ -36,6 +36,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S10 | [SONNET] | S3, S5 | done | Browser game "Leak the Vault" |
 | O2 | [OPUS] | all above | open | Final review: claims vs. proofs, README, limitations |
 | S11 | [SONNET] | O2 | open | Integrate deck and game into petersenmalte.de |
+| S12 | [SONNET] | F4 | open | Cite `Exec.noninterference` in deck, README and game; drop "F4 open" from the limitations slide |
 
 ---
 
@@ -131,6 +132,20 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 - Define `Exec.run` (the executable counterpart of `Model.run` in `Proofs/Noninterference.lean`, driven by the same
   `Strategy`/schedule), show `Exec.obs` commutes with `α` and `α (Exec.run …) = Model.run …`; then (c) transfers.
 - Only if the Fable budget allows after S-tasks are green; the deck can cite (d) + (c) on the model without it.
+- Done (2026-10-11): `lean/TenantFlow/Proofs/NoninterferenceExec.lean` – `Exec.run`, `run_abs`, `obs_abs`,
+  `Exec.noninterference` (observable events agree up to `α`; strategies are reason-blind as in the model; low
+  equivalence stated on the abstractions). Details in the `docs/spec.md` changelog and `docs/proof-status.md`.
+
+### S12 [SONNET] Cite theorem (c) for `Exec` traces (after F4)
+- F4 proved `Exec.noninterference` in `lean/TenantFlow/Proofs/NoninterferenceExec.lean`: for data low-equivalent after
+  abstraction, the `B`-observable events of `Exec.run` agree up to `α` (tenant, tool, arguments, label-as-set).
+  Strategies are reason-blind (histories hold `⌊r⌋`), exactly as in the model.
+- `web/deck/index.qmd`: line "(c) noninterference for the shared index (on the model)" → also for `Exec` traces via
+  `Exec.noninterference`; remove "(c) for `Exec` traces (optional task F4, open)" from the "Not covered" slide and
+  state the remaining assumption instead (strategies do not see denial reasons). Check README and the game's "Why?"
+  panel (`web/game/rules.js`) for the same wording. Statement and axioms: `docs/spec.md` changelog (F4 row),
+  `docs/proof-status.md`. No numbers change; do not touch `lean/`.
+- Should be done before O2 so the final review sees the final wording.
 
 ### S4 [SONNET] Baselines
 - `none` (no protection), `cedar-only`, `fides`: the label middleware of Microsoft Agent Framework (pin a version in
