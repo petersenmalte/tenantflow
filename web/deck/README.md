@@ -1,7 +1,10 @@
 # TenantFlow slide deck (Quarto / reveal.js)
 
-`index.qmd`: ten content slides in the order of `docs/project-brief.md` §7 (plus the title slide, `#/0`). One concept
-per slide, concrete example first, staged builds. Slides 1, 2, 3 and 5 embed **live widgets**: the game's board
+`index.qmd`: an "at a glance" slide (`#/glance`: the leak under Cedar vs. TenantFlow, the benchmark numbers, the theorem)
+followed by ten content slides in the order of `docs/project-brief.md` §7 (plus the title slide, `#/0`). One concept
+per slide, concrete example first. **No staged builds** (owner decision, S24): every slide shows all its content at
+once; `python/tests/test_deck.py` fails on any `fragment`. Slides that the game links to carry ids (`{#cedar}`,
+`{#sequence}`, `{#labels}`, `{#forgery}`, `{#invariant}`), so adding or reordering slides does not break those links. Slides 2, 3, 4 and 6 embed **live widgets**: the game's board
 (`web/game/src/board.js`) running the real JavaScript monitor. "Next step" plays the attack one step at a time, the
 protection buttons switch between Cedar, FIDES and TenantFlow, and the audience can drag chips directly.
 
@@ -23,7 +26,7 @@ variables or the Lean statement are stale or a slide uses an unknown variable. C
   is task S19.
 * "FIDES" is our re-implementation of the label logic of agent-framework-core 1.5.0. The APIsec article is cited but
   was not readable (HTTP 403, task S15).
-* The game links to slides by number (`../deck/index.html#/N`; inside the deck's copy `../index.html#/N`). Online, only
+* The game links to slides by id (`../deck/index.html#/cedar`; inside the deck's copy `../index.html#/cedar`). Online, only
   `_site/` is published (deck with its game copy), so the inner link is the one used; see "Publishing" below.
 
 ## Publishing on petersenmalte.de (S11)

@@ -42,3 +42,15 @@ def test_lean_statement_up_to_date():
     assert (DECK / "_isolation.lean").read_text() == prepare.lean_statement("isolation"), (
         "run: python3 web/deck/scripts/prepare.py"
     )
+
+
+def test_slide_content_is_visible_without_clicking():
+    """Owner decision (S24): no staged builds; every slide shows its whole content at once."""
+    assert "fragment" not in (DECK / "index.qmd").read_text()
+
+
+def test_game_links_point_to_existing_slide_ids():
+    rules = (DECK.parent / "game/src/rules.js").read_text()
+    used = set(re.findall(r'slide\("([\w-]+)"', rules))
+    ids = set(re.findall(r"^## .*\{[^}]*#([\w-]+)[^}]*\}\s*$", (DECK / "index.qmd").read_text(), re.M))
+    assert used and used <= ids, sorted(used - ids)

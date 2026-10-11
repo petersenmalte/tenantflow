@@ -51,6 +51,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S22 | [SONNET] | F6 | done | Cite theorem (e) `Model.transparency` in deck, game "Warum?" panel and README; regenerate `web/game/src/theorems.js` |
 | F7 | [FABLE] | S17, S18, F6 | done | Claim review: every statement in deck, game and README is covered exactly by a theorem (≈ 2–3 USD) |
 | S23 | [SONNET] | F7 | done | Apply the F7 claim-review fixes to README, deck and game; gateway returns `denied` without reason to the agent |
+| S24 | [SONNET] | S11 | done | Deck: everything visible without clicking (no fragments), "at a glance" slide that shows the value at once; slide ids for game links; project page summary |
 
 ---
 
@@ -358,6 +359,14 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 - `web/publish-homepage.sh` here renders the deck and copies the build; `REVISION` records the source commit.
 - Limits: the published build is a copy and goes stale when deck or game change (publish again); MathJax comes from a
   CDN; checked with Playwright/Chromium only (desktop and 390 px, light and dark).
+
+### S24 – done (notes; claude-opus-5-5 at the user's explicit request)
+- Owner feedback: staged builds are "nonsense"; the value must be clear without reading for ten minutes.
+- All `.fragment`s removed (test `test_slide_content_is_visible_without_clicking`); new slide `#/glance`: Cedar-only vs.
+  Cedar + TenantFlow on the three-call leak, benchmark KPIs, `Model.isolation` with assumptions; subtitle states the point.
+- Game links slides by id instead of number (`rules.js`, test `test_game_links_point_to_existing_slide_ids`).
+- New claims listed in `docs/claim-review.md` §4 (not Fable-reviewed; budget used up).
+- Homepage project page starts with the same summary; deck republished there.
 
 ### S2 – done (notes)
 - `python/src/tenantflow/{monitor,adapter,cedar,gateway,example_server}.py`, tests in `python/tests/test_monitor.py`.

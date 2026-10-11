@@ -17,7 +17,7 @@ Online without installing anything: <https://petersenmalte.de/tenantflow> (proje
 | Minutes | Do | You see |
 |---|---|---|
 | 2 | Open `web/game/index.html` in a browser (no server, no install) | Play a hijacked agent; switch protection between Off, Cedar, FIDES and TenantFlow and watch the same attack leak or bounce back |
-| 1 | `cd web/deck && quarto render && open _site/index.html` | Ten slides; slides 1–3 and 5 run the real monitor live |
+| 1 | `cd web/deck && quarto render && open _site/index.html` | Slide 1 shows the whole point at a glance; slides 2–4 and 6 run the real monitor live |
 | 1 | `cd python && uv run tenantflow check ../examples/shared-rag.json` | A concrete call sequence that leaks although Cedar allows every call; add `--enforce tenantflow`: no leak in the model |
 | 1 | `cd lean && lake build && ../scripts/check-lean.sh` | The proofs check; every theorem uses only the standard axioms |
 

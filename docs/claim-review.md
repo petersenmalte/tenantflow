@@ -59,3 +59,16 @@ Severity: **A** = overstated (says more than the theorem), **B** = incomplete hy
 - Isolation between users of one tenant; integrity noninterference; side channels; tools with memory (A4);
   correctness of the registry's classification (A2); the Python adapter beyond differential testing (A6);
   a trace-level "always `Single`" invariant for (e).
+
+## 4. Added after F7 (S24, claude-opus-5-5; not reviewed by Fable, budget used up)
+
+Slide numbers in sections 1–3 refer to the deck before S24; S24 inserted the slide `#/glance` after the title, so every
+later slide moved up by one. New claims, each checked against the existing rows above:
+
+| Location | Claim | Covered by |
+|---|---|---|
+| deck subtitle | "TenantFlow stops the leaks that happen across calls, with a Lean proof of isolation" | (a) `Model.isolation`; the assumptions are on `#/glance` and `#/scope` and in the footer. |
+| `#/glance`, right box | "The insurer never sees bank data" (level 2: read, write, search) | The concrete scenario: the game's level 2 under TenantFlow, checked against the Lean oracle (`web/game/tests`). In general: (a) `Model.isolation`. |
+| `#/glance`, steps 2–3 | "the index entry keeps its label bank", "entry filtered out" | `Model.no_launder` (the doc label is the writer's context label), the query rule of spec §5 (same wording as `#/sequence` notes and row 4 of section 2). |
+| `#/glance`, KPIs | "5/5 → 0/5 leaks / forgeries, 8/8 → 8/8 legitimate tasks" | Measured (`bench/results/results.json`), with the caveat "zeros are what the theorems predict, not independent evidence" on the slide; utility's proven counterpart is (e) `Model.transparency`. |
+| `#/glance`, KPI | "isolation proven: `Model.isolation`" | (a), with "for every agent behaviour and every Cedar policy under the assumptions" in the slide's footnote. |
