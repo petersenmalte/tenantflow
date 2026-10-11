@@ -54,7 +54,7 @@ jobs:
         env:
           TF_ORACLE: ${{ github.workspace }}/oracle-bin/oracle
           TF_EXAMPLES: "100"
-        run: uv run pytest -q
+        run: uv run --extra mcp pytest -q
       - name: Benchmark harness runs (small)
         working-directory: python
         run: uv run python ../bench/run.py --episodes 100

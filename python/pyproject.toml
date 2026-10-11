@@ -14,6 +14,9 @@ tenantflow = "tenantflow.cli:main"
 
 [project.optional-dependencies]
 fides = ["agent-framework-core==1.5.0"]
+mcp = [
+    "mcp>=2.3,<3",  # uses the 2.x server API (Server(on_call_tool=...), MCPServer)
+]
 
 [dependency-groups]
 bench = [

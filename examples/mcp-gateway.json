@@ -1,0 +1,15 @@
+{
+  "sessions": [
+    {"sid": "1", "tenant": "bank", "user": "u1", "role": "analyst"},
+    {"sid": "2", "tenant": "shop", "user": "u2", "role": "analyst"}
+  ],
+  "tools": {
+    "web_fetch": {"observers": [], "needsTrusted": false, "result": {"owners": [], "integrity": "untrusted"}},
+    "notify_shop": {"observers": ["shop"], "needsTrusted": false}
+  },
+  "index": [
+    {"label": {"owners": ["bank"], "integrity": "trusted"}, "payload": "bank secret iban"},
+    {"label": {"owners": ["shop"], "integrity": "trusted"}, "payload": "shop secret price list"}
+  ],
+  "cedarPolicies": "permit(principal == Role::\"analyst\", action, resource);"
+}

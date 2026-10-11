@@ -44,7 +44,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S17 | [SONNET] | S9 | done | Deck: navigation bug (only slide 1 reachable), redesign: interactive, staged, intuitive |
 | S18 | [SONNET] | S10, S16 | done | Game: redesign: intuitive, guided, animated; verify in a real browser |
 | S19 | [SONNET] | S5 | done | Benchmark: rerun on a clean commit; report monitor-only latency separately from Cedar |
-| S20 | [SONNET] | S2 | open | Decide/close S2 gaps: Cedar schema via cedar-for-agents generator, gateway as real MCP |
+| S20 | [SONNET] | S2 | done | Decide/close S2 gaps: Cedar schema via cedar-for-agents generator, gateway as real MCP |
 | S21 | [SONNET] | – | done | `.gitignore`: dangling comment "Personal German user guide" without a pattern |
 | F5 | [FABLE] | F3 | deferred (user: budget goes to F6 + F7) | (b1) on `Exec`: decisions and labels are independent of payload content (forgery claim at code level) |
 | F6 | [FABLE] | F3 | done | Transparency (utility) theorem: single-tenant trusted workflows are never denied by the flow monitor |
@@ -242,6 +242,9 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 ### S20 [SONNET] S2 gaps
 - Cedar schema is hand-written (task asked for the cedar-for-agents generator where possible); the gateway is a
   JSON-RPC proxy without the MCP SDK. Either close the gaps or state the decision and reason in `python/README.md`.
+- Done (Opus, user agreed): `tenantflow mcp-gateway` on the official MCP SDK (`mcp_gateway.py`, extra `mcp`, example
+  upstream `mcp_example_server.py`, `examples/mcp-gateway.json`), end-to-end test with the SDK client; CI installs the
+  extra. Generator not used: decision and reasons in `python/README.md` ("Decisions and limits").
 
 ### F7 [FABLE] Claim review of deck, game and README
 - After S17/S18 (and F6): check every sentence that states a guarantee against the Lean statements and the spec

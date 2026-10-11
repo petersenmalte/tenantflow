@@ -1,4 +1,4 @@
-"""Command line: ``tenantflow check config.json``."""
+"""Command line: ``tenantflow check``, ``tenantflow mcp-gateway config.json --session S -- CMD``."""
 
 from __future__ import annotations
 
@@ -11,6 +11,11 @@ from .check import load_config, search
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    upstream: list[str] = []
+    if "--" in argv:  # mcp-gateway: everything after -- is the upstream command
+        i = argv.index("--")
+        argv, upstream = argv[:i], argv[i + 1 :]
     ap = argparse.ArgumentParser(prog="tenantflow")
     sub = ap.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("check", help="search for a tenant-crossing call sequence")
@@ -24,7 +29,24 @@ def main(argv: list[str] | None = None) -> int:
         help="system under test: Cedar only (default) or Cedar + flow monitor",
     )
     c.add_argument("--json", action="store_true", help="machine-readable output")
+    g = sub.add_parser(
+        "mcp-gateway", help="MCP server: Cedar + flow monitor in front of an upstream MCP server"
+    )
+    g.add_argument("config", help="JSON config as for `check` (registry, index, Cedar policy)")
+    g.add_argument(
+        "--session", required=True, help="authenticated session id (set by the session layer)"
+    )
     args = ap.parse_args(argv)
+
+    if args.cmd == "mcp-gateway":
+        import anyio
+
+        from .mcp_gateway import serve  # needs the optional extra `mcp`
+
+        if not upstream:
+            ap.error("mcp-gateway: give the upstream command after --")
+        anyio.run(serve, args.config, args.session, upstream)
+        return 0
 
     path = Path(args.config)
     cfg, authorize = load_config(json.loads(path.read_text()), str(path.parent))
