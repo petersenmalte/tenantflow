@@ -48,7 +48,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S21 | [SONNET] | – | done | `.gitignore`: dangling comment "Personal German user guide" without a pattern |
 | F5 | [FABLE] | F3 | deferred (user: budget goes to F6 + F7) | (b1) on `Exec`: decisions and labels are independent of payload content (forgery claim at code level) |
 | F6 | [FABLE] | F3 | done | Transparency (utility) theorem: single-tenant trusted workflows are never denied by the flow monitor |
-| S22 | [SONNET] | F6 | open | Cite theorem (e) `Model.transparency` in deck, game "Warum?" panel and README; regenerate `web/game/src/theorems.js` |
+| S22 | [SONNET] | F6 | done | Cite theorem (e) `Model.transparency` in deck, game "Warum?" panel and README; regenerate `web/game/src/theorems.js` |
 | F7 | [FABLE] | S17, S18, F6 | open | Claim review: every statement in deck, game and README is covered exactly by a theorem (≈ 2–3 USD) |
 
 ---
@@ -186,7 +186,7 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
   in the installed 1.5.0 source): tier 3 argument scan for tools without `source_integrity`, join-only context,
   `auto_hide_untrusted`. Baseline (Python + JS), suite 2 (now 5 cases: 2 PoC cases succeed for FIDES, default /
   monotone / control fail), game level 3, deck slide 5, `docs/related-work.md`, `bench/README.md` rewritten; argument
-  scan cross-checked against the real package. Benchmark rerun on clean `448e0b5`: FIDES forgery 2/5, utility 7/8
+  scan cross-checked against the real package. Benchmark rerun on clean, pushed `8caa375` (the first run on `448e0b5` lost its hash in a rebase): FIDES forgery 2/5, utility 7/8
   (hiding prevents reading fetched content).
 
 ### S16 [SONNET] Differential test JS ↔ oracle
@@ -279,6 +279,10 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
   (level 1 and the clean half of level 5/D9); regenerate `web/game/src/theorems.js` per `web/game/README.md`.
 - Benchmark suite 3 (utility) stays the measured evidence; (e) is the proven one. Keep F7 in mind: every sentence
   must be covered exactly by the statement.
+- Done (Opus): README row (e); deck slides 7 and 9; game cites `Model.transparency` in "Why?" only when the hypothesis
+  holds before the step (TenantFlow mode, context = own tenant trusted, tool private to the tenant), tested in
+  `tests/play.test.js`; `src/theorems.js` regenerated. Level 1 under TenantFlow is a Cedar denial, so (e) appears on
+  the bank agent's own allowed steps (e.g. level 2 step 1) instead.
 
 ### S4 [SONNET] Baselines
 - `none` (no protection), `cedar-only`, `fides`: the label middleware of Microsoft Agent Framework (pin a version in

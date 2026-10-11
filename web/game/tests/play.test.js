@@ -56,6 +56,16 @@ test("level 4 under TenantFlow: the helper carries the bank's label", () => {
   assert.strictEqual(s.log[s.log.length - 1].response.reason, "flow: context not readable by every observer of the tool");
 });
 
+test("theorem (e) is cited only when its hypothesis holds", () => {
+  const s = new Session(L.LEVELS[1], "tenantflow");
+  const [r1] = MOVES[2](s);
+  assert.strictEqual(r1.entries[0].why.also, "Model.transparency"); // bank agent, fresh context, vault has no observers
+  const s3 = new Session(L.LEVELS[2], "tenantflow");
+  MOVES[3](s3); // after the untrusted reply the agent is no longer Single
+  assert.strictEqual(s3.log[1].why.also, undefined);
+  assert.ok(THEOREMS["Model.transparency"] && THEOREMS["Exec.transparency_denied"]);
+});
+
 test("illegal drops are rejected without a monitor step", () => {
   const s = new Session(L.LEVELS[1], "none");
   assert.strictEqual(s.drop({ kind: "source", tool: "vault" }, { kind: "index" }), null);

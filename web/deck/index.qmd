@@ -181,6 +181,7 @@ Whatever the agent does, and whatever the Cedar policy says.
 - **(b)** no forgery, no laundering – `Model.no_launder`
 - **(c)** noninterference: what the insurer sees depends only on data it may read – `Model.noninterference`, also for the executable monitor: `Exec.noninterference`
 - **(d)** the executable monitor implements the model – `Exec.refines`
+- **(e)** no needless denials: an agent that has read only its own tenant's trusted data, using its tenant's own tools, is never blocked by the monitor – `Model.transparency`
 :::
 :::
 ::: {.column width="50%"}
@@ -234,6 +235,8 @@ The Lean oracle runs `Exec.step`; the Python monitor (gateway) and the JavaScrip
 | Cedar only | {{< var leak.cedar_only.kn >}} | {{< var forgery.cedar_only.kn >}} | {{< var utility.cedar_only.kn >}} |
 | FIDES logic | {{< var leak.fides.kn >}} | {{< var forgery.fides.kn >}} | {{< var utility.fides.kn >}} |
 | TenantFlow | {{< var leak.tenantflow.kn >}} | {{< var forgery.tenantflow.kn >}} | {{< var utility.tenantflow.kn >}} |
+
+Utility is measured here; its proven counterpart is (e) `Model.transparency` (for agents that read only their own tenant's trusted data).
 
 Random attacker, {{< var meta.episodes >}} runs: any violation in {{< var fuzz.cedar_only.any >}} (Cedar only) vs {{< var fuzz.tenantflow.any >}} (TenantFlow).
 :::

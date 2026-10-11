@@ -139,7 +139,20 @@
     "Exec.refines_denied": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Refinement.lean#L549",
     "Exec.refines_runTrace": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Refinement.lean#L557",
     "Exec.refines_trace": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Refinement.lean#L572",
-    "Exec.refines_ghost": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Refinement.lean#L580"
+    "Exec.refines_ghost": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Refinement.lean#L580",
+    "Model.Label.joinAll_le": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L30",
+    "Model.readable_of_mem_readableDocs": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L38",
+    "Model.Single.of_root": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L49",
+    "Model.Single.readable": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L52",
+    "Model.Single.integ": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L56",
+    "Model.Single.join": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L60",
+    "Model.Allowed.labelFree": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L99",
+    "Model.LabelFree.allowed": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L114",
+    "Model.transparency": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L137",
+    "Model.transparency_step": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L145",
+    "Model.Single.of_init": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L159",
+    "Model.Single.step": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L170",
+    "Exec.transparency_denied": "https://github.com/petersenmalte/tenantflow/blob/main/lean/TenantFlow/Proofs/Transparency.lean#L229"
   };
   if (typeof module !== "undefined" && module.exports) module.exports = { THEOREMS };
   else root.TF = Object.assign(root.TF || {}, { THEOREMS });

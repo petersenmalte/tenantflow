@@ -39,6 +39,12 @@
     /** One monitor step; updates hands. Returns the log entry. */
     run(agent, action, meta = {}) {
       const before = this.won;
+      // hypothesis of theorem (e) before the step: the agent depends only on its tenant's trusted data
+      const st0 = this.mon.agents.get(M.agentKey(agent));
+      const t0 = st0 && this.mon.sessions[st0.session] ? this.mon.sessions[st0.session][0] : null;
+      const single = st0 && st0.ctx.integ === M.TRUSTED && st0.ctx.owners.size === 1 && st0.ctx.owners.has(t0);
+      const info0 = action.op === "call" && t0 ? this.mon.toolInfo(t0, action.tool) : null;
+      const privateTool = action.op !== "call" || (info0 && info0.observers.every((u) => u === t0));
       const response = this.mon.step(agent, action);
       const entry = { agent, action, response, meta };
       this.log.push(entry);
@@ -65,6 +71,11 @@
       this.won = R.won(this.level.goal, this.mon, this.log);
       entry.leak = this.won && !before;
       entry.why = R.explain(this.mode, action, response, { leak: entry.leak, goal: this.level.goal });
+      if (this.mode === "tenantflow" && single && privateTool && !M.isDenied(response))
+        entry.why = { ...entry.why, also: "Model.transparency",
+          detail: entry.why.detail + " Before this step the agent depended only on its own tenant's trusted data" +
+            (action.op === "call" ? " and the tool is private to its tenant" : "") +
+            ", so TenantFlow could not have denied it for a flow reason (theorem (e)): only Cedar or a missing agent, tool or child can." };
       if (action.op === "query" && !M.isDenied(response) && st) {
         // a matching entry that this tenant may not read was left out: say so (only TenantFlow filters)
         const t = this.tenantOf(agent);

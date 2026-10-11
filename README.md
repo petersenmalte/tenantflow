@@ -13,6 +13,7 @@ benchmark, a slide deck and a browser game build on it.
 | (b) Labels come only from the trusted registry; data cannot forge or launder them | `Model.no_launder`, `Model.ctx_mono`, `Model.child_ctx_eq` |
 | (c) What tenant B observes depends only on data B may read (noninterference) | `Model.noninterference`, `Exec.noninterference` |
 | (d) The executable monitor implements the model | `Exec.refines`, `Exec.refines_init` |
+| (e) Transparency: an agent that depends only on its own tenant's trusted data, calling tools private to its tenant, is never denied for a flow reason (only Cedar or a missing agent, tool or child can deny) | `Model.transparency`, `Exec.transparency_denied` |
 
 These hold for every agent behaviour and every Cedar policy, **under the assumptions** of `docs/spec.md`:
 trusted session, trusted adapter and tool registry, complete mediation, no side channels. Nothing is claimed about
@@ -26,4 +27,4 @@ Cedar itself. The Python monitor and the game's JavaScript monitor are tested ag
 - `bench/` – baselines and benchmark; read the caveats in `bench/README.md` before quoting numbers
 - `web/deck/` – slide deck (Quarto), `web/game/` – browser game "Leak the Vault"
 
-Status: deck and game are being reworked (tasks S17, S18 in `TASKS.md`); final review pending (O2).
+Status: final review pending (O2). Benchmark utility (suite 3) is the measured counterpart of (e).

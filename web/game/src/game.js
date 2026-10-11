@@ -69,7 +69,8 @@
     const icon = { blocked: "⛔", leak: "💥", ok: "✅" }[w.tone] || "•";
     const det = h("details", null, h("summary", null, "Why? (details)"),
       h("p", null, w.detail),
-      w.theorem ? h("p", null, "Lean theorem: ", thmLink(w.theorem)) : h("p", { class: "muted" }, "No theorem is claimed about Cedar itself."),
+      w.theorem ? h("p", null, "Lean theorem: ", thmLink(w.theorem), w.also ? [", ", thmLink(w.also)] : null)
+        : w.also ? h("p", null, "Lean theorem: ", thmLink(w.also)) : h("p", { class: "muted" }, "No theorem is claimed about Cedar itself."),
       w.slide ? h("p", null, "Slide: ", h("a", { href: w.slide.href }, w.slide.label)) : null,
       h("p", { class: "mono small" }, res.entries.map(describe).join("\n")));
     $("feedback").className = "feedback " + w.tone;
