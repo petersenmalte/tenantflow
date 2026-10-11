@@ -15,7 +15,7 @@ $presentation-heading-font-weight: 700;
 .zone { flex: 1; border: 2px solid #c8ccd4; border-radius: 10px; padding: .3em .5em; min-height: 3.2em; font-size: .7em; }
 .zone.bank { border-color: #2563eb; }
 .zone.insure { border-color: #b7791f; }
-.zone h4 { margin: 0 0 .2em; font-size: .9em; }
+.zone-title { display: block; font-weight: 700; margin: 0 0 .2em; font-size: .9em; }
 .ok { color: #1e7f4f; font-weight: 700; }
 .no { color: #c0392b; font-weight: 700; }
 .small { font-size: .62em; }
