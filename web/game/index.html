@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leak the Vault</title>
+<meta name="description" content="Play a compromised agent and try to move a bank's data to an insurer. Switch protection between off, Cedar, FIDES and TenantFlow.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Leak the Vault</h1>
+  <p class="sub">You are a compromised agent on a shared platform. Move the bank's data to the insurer.</p>
+  <nav id="levels" aria-label="Levels"></nav>
+  <fieldset id="modes"><legend>Protection</legend></fieldset>
+</header>
+<main>
+  <section id="brief" class="card"></section>
+  <section id="board" class="card" aria-live="polite"></section>
+  <section id="controls" class="card"></section>
+  <section id="log" class="card" aria-live="polite"></section>
+  <section id="why" class="card" hidden></section>
+</main>
+<footer>
+  <p>Everything runs in your browser. The monitor is a JavaScript port of the Lean-verified <code>Exec.step</code>, tested against the Lean oracle (<code>npm test</code>).
+  Guarantees hold in the model under the assumptions of <a href="https://github.com/petersenmalte/tenantflow/blob/main/docs/spec.md">the spec</a>: trusted session, trusted adapter and registry, no side channels. All data is synthetic.</p>
+</footer>
+<script src="src/monitor.js"></script>
+<script src="src/levels.js"></script>
+<script src="src/rules.js"></script>
+<script src="src/game.js"></script>
+</body>
+</html>
