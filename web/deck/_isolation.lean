@@ -1,0 +1,3 @@
+theorem isolation {g : GState T Ext Role Pay Sid} (h : GReachable cfg D (ginit cfg D) g) :
+    ∀ e ∈ g.base.events, ∀ u, cfg.observersOf e u →
+      ∀ o, g.ghost.event e o → readable u (label₀ cfg D o) := …

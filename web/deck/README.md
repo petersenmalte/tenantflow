@@ -6,14 +6,15 @@ per slide, concrete example first, staged builds. Slides 1, 2, 3 and 5 embed **l
 protection buttons switch between Cedar, FIDES and TenantFlow, and the audience can drag chips directly.
 
 ```
-quarto render index.qmd      # Quarto ≥ 1.4; runs scripts/prepare.py first; output: _site/ (git-ignored)
+quarto render                # in web/deck; Quarto ≥ 1.4; runs scripts/prepare.py first; output: _site/
 open _site/index.html
 ```
 
 `scripts/prepare.py` (pre-render, stdlib only) generates `_variables.yml` from `bench/results/results.json`, extracts the
 statement of `isolation` from `lean/TenantFlow/Proofs.lean` into `_isolation.lean`, and copies the game into `game/`
-and the benchmark plot into `img/` (all git-ignored except `_variables.yml`). `python/tests/test_deck.py` fails if the
-variables are stale or a slide uses an unknown variable. Colour convention: bank blue, insurer gold, untrusted red dashed.
+and the benchmark plot into `img/` (git-ignored). `_variables.yml` and `_isolation.lean` are committed, because Quarto
+resolves includes before the pre-render step; render the project (`quarto render`), not the single file. `python/tests/test_deck.py` fails if the
+variables or the Lean statement are stale or a slide uses an unknown variable. Colour convention: bank blue, insurer gold, untrusted red dashed.
 
 ## Deviations and limits
 * Checked in headless Chrome at 1280×760 (all slides with all fragments, widget steps in Cedar and TenantFlow mode);

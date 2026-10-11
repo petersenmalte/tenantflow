@@ -78,4 +78,5 @@ jobs:
         run: python3 web/deck/scripts/gen_variables.py --check
       - uses: quarto-dev/quarto-actions/setup@v2
       - name: Render the deck
-        run: quarto render web/deck/index.qmd
+        working-directory: web/deck
+        run: quarto render   # project render: runs scripts/prepare.py first

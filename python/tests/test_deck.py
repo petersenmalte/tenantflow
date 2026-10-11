@@ -32,3 +32,13 @@ def test_every_var_used_by_the_slides_exists():
             have[".".join(k for _, k in path)] = val.strip()
     used = set(re.findall(r"\{\{< var ([\w.]+) >\}\}", text))
     assert used and used <= set(have), sorted(used - set(have))
+
+
+def test_lean_statement_up_to_date():
+    """_isolation.lean is committed (Quarto resolves includes before the pre-render script runs)."""
+    sys.path.insert(0, str(DECK / "scripts"))
+    import prepare
+
+    assert (DECK / "_isolation.lean").read_text() == prepare.lean_statement("isolation"), (
+        "run: python3 web/deck/scripts/prepare.py"
+    )

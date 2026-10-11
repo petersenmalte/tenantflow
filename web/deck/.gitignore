@@ -2,5 +2,4 @@
 **/*.quarto_ipynb
 /_site/
 /game/
-/_isolation.lean
 /img/
