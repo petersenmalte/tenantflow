@@ -121,9 +121,9 @@
       sides.middle.unshift(index);
       el.replaceChildren(
         h("div", { class: `board ${opts.compact ? "compact" : ""}` },
-          h("section", { class: "side bank", "aria-label": "Bank side" }, h("h3", { class: "side-title" }, "🏦 Bank"), sides.bank),
-          h("section", { class: "side middle", "aria-label": "Shared platform" }, h("h3", { class: "side-title" }, "Shared platform"), sides.middle),
-          h("section", { class: "side insure", "aria-label": "Insurer side" }, h("h3", { class: "side-title" }, "🛡️ Insurer"), sides.insure)),
+          h("div", { class: "side bank", role: "region", "aria-label": "Bank side" }, h("h3", { class: "side-title" }, "🏦 Bank"), sides.bank),
+          h("div", { class: "side middle", role: "region", "aria-label": "Shared platform" }, h("h3", { class: "side-title" }, "Shared platform"), sides.middle),
+          h("div", { class: "side insure", role: "region", "aria-label": "Insurer side" }, h("h3", { class: "side-title" }, "🛡️ Insurer"), sides.insure)),
         live);
       if (picked) highlight(picked.item);
     }

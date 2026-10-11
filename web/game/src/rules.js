@@ -118,9 +118,10 @@
     return { tone: "ok", short: "Allowed.", detail: mode === "tenantflow" ? "All checks passed." : MODE_WHY[mode], slide: slide(2, "What Cedar checks per call") };
   }
 
-  function explainFiltered(mode, doc, tenant) {
+  function explainFiltered(mode, doc, t) {
+    const tenant = { bank: "the bank", insure: "the insurer" }[t] || t;
     return { tone: "blocked", short: `The search did not return it: this entry is not readable by ${tenant}.`,
-      detail: `TenantFlow filters the shared index per tenant: the entry is labelled ${[...doc.label.owners].join(", ") || "no owner"}. The search ran (and was allowed), but only ${tenant}-readable entries were ranked.`,
+      detail: `TenantFlow filters the shared index per tenant: the entry is labelled ${[...doc.label.owners].join(", ") || "no owner"}. The search ran (and was allowed), but only entries readable by ${tenant} were ranked.`,
       theorem: "Model.noninterference", slide: slide(3, "Three allowed calls, one leak") };
   }
 

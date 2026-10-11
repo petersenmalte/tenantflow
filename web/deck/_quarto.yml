@@ -3,3 +3,9 @@ project:
   output-dir: _site
   render:
     - index.qmd
+  pre-render: python3 scripts/prepare.py
+  resources:
+    - game/**
+    - game/style.css
+    - widgets.js
+    - img/**

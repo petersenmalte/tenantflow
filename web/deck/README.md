@@ -1,24 +1,26 @@
 # TenantFlow slide deck (Quarto / reveal.js)
 
-`index.qmd`, ten content slides in the order of `docs/project-brief.md` §7 (plus Quarto's title slide, which is `#/0`).
-Colours: tenant A (bank) blue, tenant B (insurer) gold, untrusted data red dashed (`custom.scss`).
+`index.qmd`: ten content slides in the order of `docs/project-brief.md` §7 (plus the title slide, `#/0`). One concept
+per slide, concrete example first, staged builds. Slides 1, 2, 3 and 5 embed **live widgets**: the game's board
+(`web/game/src/board.js`) running the real JavaScript monitor. "Next step" plays the attack one step at a time, the
+protection buttons switch between Cedar, FIDES and TenantFlow, and the audience can drag chips directly.
 
 ```
-python3 scripts/gen_variables.py     # bench/results/results.json -> _variables.yml (run after every benchmark run)
-quarto render index.qmd              # needs Quarto >= 1.4; output: _site/ (git-ignored)
+quarto render index.qmd      # Quarto ≥ 1.4; runs scripts/prepare.py first; output: _site/ (git-ignored)
+open _site/index.html
 ```
 
-Every number on the results slide is a `{{< var ... >}}` from `_variables.yml`, which is generated from
-`bench/results/results.json`; `python/tests/test_deck.py` fails if the file is stale or a slide uses an unknown variable.
-Claims on slides cite theorem names from `docs/proof-status.md`.
+`scripts/prepare.py` (pre-render, stdlib only) generates `_variables.yml` from `bench/results/results.json`, extracts the
+statement of `isolation` from `lean/TenantFlow/Proofs.lean` into `_isolation.lean`, and copies the game into `game/`
+and the benchmark plot into `img/` (all git-ignored except `_variables.yml`). `python/tests/test_deck.py` fails if the
+variables are stale or a slide uses an unknown variable. Colour convention: bank blue, insurer gold, untrusted red dashed.
 
 ## Deviations and limits
-* **Rendered once, not inspected visually.** First render (Quarto 1.10.19) warned about unknown `var`s because the deck had no `_quarto.yml`; fixed, no warnings now. Not looked at in a browser:
-  layout, the staged builds (fragments) on slides 3 and 5, and the KaTeX formula on slide 6 are unchecked. The CI job `deck`
-  renders it on GitHub (also unobserved so far). Render it locally and look at every slide before publishing (S11).
-* The browser game links to slides as `../deck/index.html#/N` (`web/game/src/rules.js`); the layout of the website
-  integration (S11) may change these paths.
-* The staged build on slide 3 shows the chip in three boxes (bank, index, insurer) instead of animating a move.
-* The results slide shows the benchmark caveats from `bench/README.md` (TenantFlow's 0 % is predicted by the theorems and not
-  independent evidence; `FIDES logic` is a re-implementation of agent-framework-core 1.5.0; small suites).
-* Slide 6 quotes the Lean statement of `isolation` from `lean/TenantFlow/Proofs.lean` by hand; it is not extracted automatically.
+* Checked in headless Chrome at 1280×760 (all slides with all fragments, widget steps in Cedar and TenantFlow mode);
+  not yet presented on a projector or checked on a phone.
+* The deck's numbers come from `bench/results/results.json` at revision `4775e8a`; the benchmark rerun on a clean commit
+  is task S19.
+* "FIDES" is our re-implementation of the label logic of agent-framework-core 1.5.0. The APIsec article is cited but
+  was not readable (HTTP 403, task S15).
+* The game links to slides by number (`../deck/index.html#/N`); a deployment that moves the deck must keep that path
+  (task S11).

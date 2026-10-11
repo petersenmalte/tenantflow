@@ -36,12 +36,12 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S10 | [SONNET] | S3, S5 | done | Browser game "Leak the Vault" |
 | O2 | [OPUS] | all above | open | Final review: claims vs. proofs, README, limitations |
 | S11 | [SONNET] | O2 | open | Integrate deck and game into petersenmalte.de |
-| S12 | [SONNET] | F4 | open | Cite `Exec.noninterference` in deck, README and game; drop "F4 open" from the limitations slide |
+| S12 | [SONNET] | F4 | done | Cite `Exec.noninterference` in deck, README and game; drop "F4 open" from the limitations slide |
 | S13 | [SONNET] | S8 | done | CI never ran on GitHub: find the cause, add `workflow_dispatch`, get a first green run |
 | S14 | [SONNET] | – | done | Root README states "nothing proven yet": replace with the current state (polish stays in O2) |
 | S15 | [SONNET] | – | open | APIsec article never read (403): user reads it, verify our forgery cases and citations against it |
 | S16 | [SONNET] | S10 | done | Randomised differential test JS game monitor ↔ Lean oracle (as S3 for Python) |
-| S17 | [SONNET] | S9 | open | Deck: navigation bug (only slide 1 reachable), redesign: interactive, staged, intuitive |
+| S17 | [SONNET] | S9 | done | Deck: navigation bug (only slide 1 reachable), redesign: interactive, staged, intuitive |
 | S18 | [SONNET] | S10, S16 | done | Game: redesign: intuitive, guided, animated; verify in a real browser |
 | S19 | [SONNET] | S5 | open | Benchmark: rerun on a clean commit; report monitor-only latency separately from Cedar |
 | S20 | [SONNET] | S2 | open | Decide/close S2 gaps: Cedar schema via cedar-for-agents generator, gateway as real MCP |
@@ -197,6 +197,10 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 - Redesign (user feedback): far too static and not intuitive. Follow the style reference (one concept per slide,
   concrete example before abstraction, staged builds), chips that visibly move, the join drawn as two chips,
   Lean statement marked as abridged or extracted, use the benchmark plots. Inspect every slide in a browser.
+- Done (Opus): navigation bug fixed (also the board's `<section>`s were read as slides); deck rebuilt: live widgets on
+  slides 1, 2, 3, 5 (game board + real JS monitor, step button, protection switch), join drawn as two chips, Lean
+  statement extracted at render time (`scripts/prepare.py`), benchmark plot, staged builds. Checked in headless Chrome.
+  S12 done along the way: deck and README cite `Exec.noninterference`; "F4 open" removed.
 
 ### Target picture for S17/S18 (user decisions, 2026-10-11)
 - Game: **drag & drop**. Data chips (bank blue, insurer gold, untrusted red dashed) are dragged between agents, the

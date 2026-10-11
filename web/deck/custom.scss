@@ -1,26 +1,53 @@
 /*-- scss:defaults --*/
 $body-bg: #ffffff;
-$body-color: #1b1f27;
+$body-color: #18202b;
 $link-color: #2563eb;
-$presentation-font-size-root: 30px;
+$presentation-font-size-root: 28px;
 $presentation-heading-font-weight: 700;
+$presentation-heading-color: #18202b;
 
 /*-- scss:rules --*/
-// colour convention: tenant A (bank) blue, tenant B (insurer) gold, untrusted data red dashed
-.chip { display: inline-block; padding: 0 .55em; border-radius: 999px; border: 2px solid; font-size: .7em; margin: .1em .2em; white-space: nowrap; }
-.chip.bank { background: #dbe7ff; border-color: #2563eb; }
-.chip.insure { background: #fdecc8; border-color: #b7791f; }
-.chip.untrusted { background: transparent; border: 2px dashed #c0392b; color: #c0392b; }
-.stage { display: flex; gap: .6em; justify-content: space-between; align-items: stretch; margin: .6em 0; }
-.zone { flex: 1; border: 2px solid #c8ccd4; border-radius: 10px; padding: .3em .5em; min-height: 3.2em; font-size: .7em; }
-.zone.bank { border-color: #2563eb; }
-.zone.insure { border-color: #b7791f; }
-.zone-title { display: block; font-weight: 700; margin: 0 0 .2em; font-size: .9em; }
-.ok { color: #1e7f4f; font-weight: 700; }
-.no { color: #c0392b; font-weight: 700; }
-.small { font-size: .62em; }
-.arrow { align-self: center; font-size: 1.2em; }
-table { font-size: .6em; }
-.reveal pre code { font-size: .55em; }
-.cols { display: flex; gap: 1em; }
-.cols > div { flex: 1; }
+// Colour convention (same as the game, game/style.css): bank blue, insurer gold, untrusted red dashed.
+body { background: #fff; }
+.reveal .slides section { text-align: left; }
+.reveal h2 { font-size: 1.45em; margin-bottom: .45em; }
+.reveal .lead { font-size: 1.05em; margin-top: .5em; }
+.reveal .small { font-size: .68em; color: #5b6472; }
+.reveal div.small p, .reveal .small .small { font-size: 1em; }
+.reveal .chip { font-size: .62em; vertical-align: middle; }
+.reveal .k { display: inline-block; min-width: 5.5em; color: #5b6472; font-size: .8em; }
+.reveal .no { color: #c62828; font-weight: 700; }
+.reveal pre { width: 100%; box-shadow: none; }
+.reveal pre code { font-size: .55em; line-height: 1.35; max-height: 420px; border-radius: 10px; }
+.reveal table { font-size: .78em; }
+.reveal table .chip { font-size: .8em; }
+
+// live widgets: the game's board, at a fixed small size inside the slide
+.reveal .tf-widget { font-size: 16px; line-height: 1.4; margin: .3em 0; }
+.reveal .tf-widget .small { font-size: 13px; color: #5b6472; }
+.reveal .tf-widget h3 { font-size: .95rem; margin: 0; text-transform: none; letter-spacing: 0; font-weight: 600; color: #5b6472; }
+.reveal .tf-widget p { margin: 0; }
+.reveal .tf-widget .board { gap: 10px; }
+.reveal .tf-widget .side { padding: 8px; gap: 8px; }
+.reveal .tf-widget .place { padding: 6px 8px; }
+.reveal .tf-widget .chip { font-size: 13px; }
+.reveal .tf-widget .tool-icon { font-size: 1.2rem; }
+.reveal .tf-widget button { font-size: 14px; }
+.w-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.w-modes { display: inline-flex; gap: 4px; }
+.w-mode[aria-pressed="true"] { background: #18202b; color: #fff; border-color: #18202b; }
+.w-mode.tenantflow[aria-pressed="true"] { background: #1b7f4b; border-color: #1b7f4b; }
+.w-step { font-weight: 600; }
+.w-status { font-size: 14px; font-weight: 500; padding: 3px 10px; border-radius: 8px; }
+.w-status.blocked { background: #dcf3e6; }
+.w-status.leak { background: #fde4e1; }
+.w-status.ok { background: #eef2f7; }
+
+// architecture strip
+.reveal .arch > p { width: 100%; }
+.reveal .arch, .reveal .arch > p { display: flex; align-items: stretch; gap: .3em; margin: 1.2em 0 .6em; }
+.reveal .arch .box { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; border: 2px solid #d7dbe2; border-radius: 14px; padding: .5em .3em; font-size: .62em; font-weight: 600; background: #fff; }
+.reveal .arch .box small { font-weight: 400; color: #5b6472; }
+.reveal .arch .box.hl { border-color: #1b7f4b; background: #dcf3e6; }
+.reveal .arch .arr { font-size: .9em; color: #5b6472; align-self: center; }
+.reveal .play { display: inline-block; background: #18202b; color: #fff !important; padding: .25em .7em; border-radius: 12px; }

@@ -64,6 +64,13 @@
       this.won = R.won(this.level.goal, this.mon, this.log);
       entry.leak = this.won && !before;
       entry.why = R.explain(this.mode, action, response, { leak: entry.leak, goal: this.level.goal });
+      if (action.op === "query" && !M.isDenied(response) && st) {
+        // a matching entry that this tenant may not read was left out: say so (only TenantFlow filters)
+        const t = this.tenantOf(agent);
+        const hidden = this.mon.index.find((d) => !M.readableBy(d.label, t) && M.score(action.q, d.payload) > 0 &&
+          !response.values.some((v) => key(v) === key(d.payload)));
+        if (hidden) { entry.filtered = true; entry.why = R.explainFiltered(this.mode, hidden, t); }
+      }
       return entry;
     }
 
