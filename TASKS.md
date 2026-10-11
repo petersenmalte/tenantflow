@@ -46,8 +46,9 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S19 | [SONNET] | S5 | open | Benchmark: rerun on a clean commit; report monitor-only latency separately from Cedar |
 | S20 | [SONNET] | S2 | open | Decide/close S2 gaps: Cedar schema via cedar-for-agents generator, gateway as real MCP |
 | S21 | [SONNET] | – | open | `.gitignore`: dangling comment "Personal German user guide" without a pattern |
-| F5 | [FABLE] | F3 | open | (b1) on `Exec`: decisions and labels are independent of payload content (forgery claim at code level) |
+| F5 | [FABLE] | F3 | deferred (user: budget goes to F6 + F7) | (b1) on `Exec`: decisions and labels are independent of payload content (forgery claim at code level) |
 | F6 | [FABLE] | F3 | open | Transparency (utility) theorem: single-tenant trusted workflows are never denied by the flow monitor |
+| F7 | [FABLE] | S17, S18, F6 | open | Claim review: every statement in deck, game and README is covered exactly by a theorem (≈ 2–3 USD) |
 
 ---
 
@@ -188,6 +189,16 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
   concrete example before abstraction, staged builds), chips that visibly move, the join drawn as two chips,
   Lean statement marked as abridged or extracted, use the benchmark plots. Inspect every slide in a browser.
 
+### Target picture for S17/S18 (user decisions, 2026-10-11)
+- Game: **drag & drop**. Data chips (bank blue, insurer gold, untrusted red dashed) are dragged between agents, the
+  shared index and tools; every move is checked immediately by the real JS monitor and animated (passes / bounces
+  back), with the reason at the chip. Must also work without a mouse (keyboard / tap).
+- Audience: **both, layered**: simple surface that a recruiter understands in two minutes, precise details
+  (theorem names, assumptions, denial reasons) on demand.
+- Deck: Quarto/reveal.js stays, but slides 3–5 embed **live widgets** running the real JS monitor (click a step,
+  the chip moves; switch the protection mode on the slide).
+- Fable budget (~14 USD): F6 transparency theorem, then F7 claim review after S17/S18. F5 deferred.
+
 ### S18 [SONNET] Game rework
 - User feedback: far from the target picture; must be much more intuitive, guided and interactive, less static.
   Visible chips that move between agents/index/tools, one clear goal per level, immediate feedback, the "Warum?"
@@ -203,6 +214,11 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 ### S20 [SONNET] S2 gaps
 - Cedar schema is hand-written (task asked for the cedar-for-agents generator where possible); the gateway is a
   JSON-RPC proxy without the MCP SDK. Either close the gaps or state the decision and reason in `python/README.md`.
+
+### F7 [FABLE] Claim review of deck, game and README
+- After S17/S18 (and F6): check every sentence that states a guarantee against the Lean statements and the spec
+  assumptions; flag vacuous, overstated or uncovered claims; fix wording in the spec changelog if needed and list the
+  required text changes as a `[SONNET]` task. Budget ≈ 2–3 USD.
 
 ### S21 [SONNET] `.gitignore`
 - Comment "Personal German user guide, not part of the public repository" has no pattern. Ask the user which file
