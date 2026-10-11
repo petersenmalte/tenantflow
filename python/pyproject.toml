@@ -9,6 +9,9 @@ dependencies = [
     "cedarpy>=4.12.1",
 ]
 
+[project.scripts]
+tenantflow = "tenantflow.cli:main"
+
 [project.optional-dependencies]
 fides = ["agent-framework-core==1.5.0"]
 

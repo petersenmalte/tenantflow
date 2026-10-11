@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
 
 from tenantflow.baselines import Baseline
 from tenantflow.cedar import CedarAuthorizer
+from tenantflow.check import Violations, violations  # noqa: F401 (re-exported)
 from tenantflow.monitor import (
     TRUSTED,
     UNTRUSTED,
@@ -100,36 +100,3 @@ def write(a: AgentId, payload: Any) -> Step:
 
 
 # ---- ground truth (computed from the labels every variant records, enforced or not) -------------
-
-
-@dataclass
-class Violations:
-    confidentiality: bool = False  # data of a foreign tenant reached an agent or an observer
-    integrity: bool = False  # a trusted-only tool ran on an untrusted context
-    detail: list[str] = field(default_factory=list)
-
-    @property
-    def any(self) -> bool:
-        return self.confidentiality or self.integrity
-
-
-def violations(mon: Monitor) -> Violations:
-    v = Violations()
-    for a, st in mon.agents.items():
-        tenant = mon.sessions[st.session][0]
-        if st.ctx.owners - {tenant}:
-            v.confidentiality = True
-            v.detail.append(f"agent {a} read foreign data {sorted(st.ctx.owners)}")
-    for e in mon.events:
-        info = mon.tool_info(e.tenant, e.tool)
-        if info is None:
-            continue
-        if not all(e.label.readable_by(u) for u in info.observers):
-            v.confidentiality = True
-            v.detail.append(
-                f"event {e.tool} leaks {sorted(e.label.owners)} to {sorted(info.observers)}"
-            )
-        if info.needs_trusted and e.label.integ != TRUSTED:
-            v.integrity = True
-            v.detail.append(f"event {e.tool} ran on untrusted context")
-    return v

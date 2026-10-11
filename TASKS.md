@@ -30,7 +30,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S4 | [SONNET] | S2 | done | Baselines: none, Cedar-only, FIDES middleware |
 | S5 | [SONNET] | S3, S4 | done | Benchmark suites, adversarial fuzzing agent, latency, plots |
 | S6 | [SONNET] | S5 | open | OPTIONAL – small real-LLM utility run (ask user first, costs API money) |
-| S7 | [SONNET] | S3 | open | CLI `tenantflow check` (CI mode with counterexamples) |
+| S7 | [SONNET] | S3 | done | CLI `tenantflow check` (CI mode with counterexamples) |
 | S8 | [SONNET] | S1, S3 | open | GitHub Actions CI |
 | S9 | [SONNET] | S5 | open | Quarto slide deck |
 | S10 | [SONNET] | S3, S5 | open | Browser game "Leak the Vault" |
@@ -196,3 +196,8 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 - Headline (seed 1, 2000 episodes): none / Cedar-only / FIDES-1.5.0-logic violate in ~100 % of fuzz episodes and 5/5
   leak scenarios; FIDES blocks only the unlabelled control in suite 2 (3/4 forgery succeed); TenantFlow 0 violations,
   8/8 utility. Latency ~170 µs per decision, all Cedar (cedarpy).
+
+### S7 – done (notes)
+- `python/src/tenantflow/{check,cli}.py` (`tenantflow check`, entry point in `pyproject.toml`), `examples/shared-rag.json`,
+  tests `python/tests/test_cli.py`, README section with a GitHub Action example. `violations` moved to `tenantflow.check`
+  (bench imports it from there).

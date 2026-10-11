@@ -1,0 +1,16 @@
+{
+  "sessions": [
+    {"sid": "1", "tenant": "bank", "user": "u1", "role": "analyst"},
+    {"sid": "2", "tenant": "insure", "user": "u2", "role": "analyst"}
+  ],
+  "tools": {
+    "fetch": {"observers": [], "needsTrusted": false, "result": {"owners": [], "integrity": "untrusted"}},
+    "pay": {"observers": [], "needsTrusted": true},
+    "notify_insure": {"observers": ["insure"]}
+  },
+  "index": [
+    {"label": {"owners": ["bank"], "integrity": "trusted"}, "payload": "bank account iban"},
+    {"label": {"owners": ["insure"], "integrity": "trusted"}, "payload": "insure policy claim"}
+  ],
+  "cedarPolicies": "permit(principal == Role::\"analyst\", action, resource);"
+}
