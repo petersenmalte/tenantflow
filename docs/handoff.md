@@ -3,7 +3,7 @@
 Overwritten at the end of every session. Keep it short; the next session reads only this, CLAUDE.md and TASKS.md.
 
 - **Last session:** S11 website integration (claude-opus-5-5, user's explicit choice). Homepage PR
-  petersenmalte/petersenmalte-homepage#16 adds `tenantflow.html` and the deck/game build; online after the owner merges it.
+  petersenmalte/petersenmalte-homepage#16 (merged) adds `tenantflow.html`, an index icon and the deck/game build; live and checked on 2026-10-11.
   All tasks except S6 (optional real-LLM run) are done. CI green; `lake build`, pytest (41, extras `mcp` + `fides`),
   game tests (68) and `quarto render` pass.
 - **Open `sorry`s:** none.
