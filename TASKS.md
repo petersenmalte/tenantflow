@@ -168,7 +168,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 ### S9 – done (notes)
 - `web/deck/`: `index.qmd` (10 slides + title), `custom.scss`, `scripts/gen_variables.py` (numbers from `bench/results/results.json`
   into `_variables.yml`), `python/tests/test_deck.py`, CI job `deck`. Deviations and limits: `web/deck/README.md`.
-- **Not rendered**: Quarto was not installed here; layout and builds are unchecked (see README). The game's "Why?" links now use
+- Render fixed by `_quarto.yml` (without it `_variables.yml` is ignored and output goes next to the .qmd); no warnings. Layout and builds still not inspected visually (see README). The game's "Why?" links now use
   `../deck/index.html#/N` (N = content slide).
 
 ### S10 – done (notes)

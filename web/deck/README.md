@@ -13,7 +13,7 @@ Every number on the results slide is a `{{< var ... >}}` from `_variables.yml`, 
 Claims on slides cite theorem names from `docs/proof-status.md`.
 
 ## Deviations and limits
-* **Not rendered yet.** Quarto was not installed in the session that wrote the deck, so `quarto render` has never been run:
+* **Rendered once, not inspected visually.** First render (Quarto 1.10.19) warned about unknown `var`s because the deck had no `_quarto.yml`; fixed, no warnings now. Not looked at in a browser:
   layout, the staged builds (fragments) on slides 3 and 5, and the KaTeX formula on slide 6 are unchecked. The CI job `deck`
   renders it on GitHub (also unobserved so far). Render it locally and look at every slide before publishing (S11).
 * The browser game links to slides as `../deck/index.html#/N` (`web/game/src/rules.js`); the layout of the website
