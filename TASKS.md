@@ -37,6 +37,17 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | O2 | [OPUS] | all above | open | Final review: claims vs. proofs, README, limitations |
 | S11 | [SONNET] | O2 | open | Integrate deck and game into petersenmalte.de |
 | S12 | [SONNET] | F4 | open | Cite `Exec.noninterference` in deck, README and game; drop "F4 open" from the limitations slide |
+| S13 | [SONNET] | S8 | open | CI never ran on GitHub: find the cause, add `workflow_dispatch`, get a first green run |
+| S14 | [SONNET] | – | open | Root README states "nothing proven yet": replace with the current state (polish stays in O2) |
+| S15 | [SONNET] | – | open | APIsec article never read (403): user reads it, verify our forgery cases and citations against it |
+| S16 | [SONNET] | S10 | open | Randomised differential test JS game monitor ↔ Lean oracle (as S3 for Python) |
+| S17 | [SONNET] | S9 | open | Deck: navigation bug (only slide 1 reachable), redesign: interactive, staged, intuitive |
+| S18 | [SONNET] | S10, S16 | open | Game: redesign: intuitive, guided, animated; verify in a real browser |
+| S19 | [SONNET] | S5 | open | Benchmark: rerun on a clean commit; report monitor-only latency separately from Cedar |
+| S20 | [SONNET] | S2 | open | Decide/close S2 gaps: Cedar schema via cedar-for-agents generator, gateway as real MCP |
+| S21 | [SONNET] | – | open | `.gitignore`: dangling comment "Personal German user guide" without a pattern |
+| F5 | [FABLE] | F3 | open | (b1) on `Exec`: decisions and labels are independent of payload content (forgery claim at code level) |
+| F6 | [FABLE] | F3 | open | Transparency (utility) theorem: single-tenant trusted workflows are never denied by the flow monitor |
 
 ---
 
@@ -146,6 +157,67 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
   panel (`web/game/rules.js`) for the same wording. Statement and axioms: `docs/spec.md` changelog (F4 row),
   `docs/proof-status.md`. No numbers change; do not touch `lean/`.
 - Should be done before O2 so the final review sees the final wording.
+
+### Rework found in the Opus inventory (2026-10-11)
+Sonnet ran S0–S10 at medium effort; the inventory found gaps that are tracked here. The user authorised Opus to work
+on these SONNET tasks in this session. F4 ran in parallel; none of these tasks touch `lean/`.
+
+### S13 [SONNET] CI never ran
+- `gh api repos/petersenmalte/tenantflow/actions/runs` → `total_count: 0` after ≥ 6 pushes since S8, workflow `ci` is
+  `active`, Actions enabled. Every "CI checks X" statement is unbacked until a run is green.
+- Find the cause (repo/account settings, billing, workflow syntax), add `workflow_dispatch`, fix failing jobs.
+
+### S14 [SONNET] Root README is wrong
+- `README.md` still says "Work in progress … Nothing in this repository is claimed to be proven yet." Replace it with
+  a short, correct state (theorems with names, assumptions, links to game/deck/bench). Full polish in O2.
+
+### S15 [SONNET] APIsec analysis not read
+- The article returned HTTP 403 in S4; it is still cited in `docs/related-work.md`, `bench/README.md`, the deck.
+  The user reads it in a browser; check that suite 2 (forgery) and the FIDES re-implementation match what it
+  describes, and fix or qualify the citations. CLAUDE.md §8.
+
+### S16 [SONNET] Differential test JS ↔ oracle
+- S10 tested the JS monitor on only 9 traces (5 hand-written, 4 level scripts). Add a randomised corpus: generate
+  ≥ 300 scenarios (reuse the Hypothesis strategies of `python/tests/test_differential.py`), store oracle outputs as
+  fixtures (or run the oracle in CI), compare the JS monitor on all of them; also the 3 baselines vs Python.
+
+### S17 [SONNET] Deck rework
+- Bug: `####` headings inside `.zone` divs become nested sections (22 `<section>`s instead of 11), so only the first
+  slide is reachable.
+- Redesign (user feedback): far too static and not intuitive. Follow the style reference (one concept per slide,
+  concrete example before abstraction, staged builds), chips that visibly move, the join drawn as two chips,
+  Lean statement marked as abridged or extracted, use the benchmark plots. Inspect every slide in a browser.
+
+### S18 [SONNET] Game rework
+- User feedback: far from the target picture; must be much more intuitive, guided and interactive, less static.
+  Visible chips that move between agents/index/tools, one clear goal per level, immediate feedback, the "Warum?"
+  panel as in the brief. Lean links with file + line anchors (`noninterference` lives in another file).
+  Check in a real browser (layout, dark mode, phone width, keyboard).
+
+### S19 [SONNET] Benchmark provenance and latency
+- `results.json` has `meta.git = 4775e8a` (S4) but was produced by uncommitted S5 code; S7 moved `violations`
+  afterwards. Rerun on a clean commit and regenerate the deck variables.
+- Latency mean (99 µs) < median (169 µs): ~40 % of decisions exit before Cedar. Report the monitor alone (without
+  Cedar) separately, so "the monitor adds no measurable cost" is measured, not inferred.
+
+### S20 [SONNET] S2 gaps
+- Cedar schema is hand-written (task asked for the cedar-for-agents generator where possible); the gateway is a
+  JSON-RPC proxy without the MCP SDK. Either close the gaps or state the decision and reason in `python/README.md`.
+
+### S21 [SONNET] `.gitignore`
+- Comment "Personal German user guide, not part of the public repository" has no pattern. Ask the user which file
+  is meant (`GUIDE.md` is tracked on purpose as the English operator guide).
+
+### F5 [FABLE] (b1) payload independence on `Exec`
+- Dropped in F1b by the cost rule. Statement: two `Exec` states/actions that differ only in payloads give the same
+  decision (⌊r⌋) and the same labels. Backs "labels in data are ignored" at code level (deck slide 5, game level 3).
+  Budget target ≤ 5 USD.
+
+### F6 [FABLE] Transparency (utility) theorem
+- The spec claims only safety; utility is measured (suite 3). State and prove: if every origin an agent may depend
+  on is owned by its own tenant and trusted, the monitor never denies an action for a flow reason (only Cedar, unknown
+  agent/tool, report/receive preconditions can). Gives the deck a proven counterpart to "TenantFlow keeps utility".
+  Spec changelog entry required. Budget target ≤ 8 USD.
 
 ### S4 [SONNET] Baselines
 - `none` (no protection), `cedar-only`, `fides`: the label middleware of Microsoft Agent Framework (pin a version in
