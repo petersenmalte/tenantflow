@@ -47,7 +47,8 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S20 | [SONNET] | S2 | open | Decide/close S2 gaps: Cedar schema via cedar-for-agents generator, gateway as real MCP |
 | S21 | [SONNET] | – | done | `.gitignore`: dangling comment "Personal German user guide" without a pattern |
 | F5 | [FABLE] | F3 | deferred (user: budget goes to F6 + F7) | (b1) on `Exec`: decisions and labels are independent of payload content (forgery claim at code level) |
-| F6 | [FABLE] | F3 | open | Transparency (utility) theorem: single-tenant trusted workflows are never denied by the flow monitor |
+| F6 | [FABLE] | F3 | done | Transparency (utility) theorem: single-tenant trusted workflows are never denied by the flow monitor |
+| S22 | [SONNET] | F6 | open | Cite theorem (e) `Model.transparency` in deck, game "Warum?" panel and README; regenerate `web/game/src/theorems.js` |
 | F7 | [FABLE] | S17, S18, F6 | open | Claim review: every statement in deck, game and README is covered exactly by a theorem (≈ 2–3 USD) |
 
 ---
@@ -255,6 +256,22 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
   on is owned by its own tenant and trusted, the monitor never denies an action for a flow reason (only Cedar, unknown
   agent/tool, report/receive preconditions can). Gives the deck a proven counterpart to "TenantFlow keeps utility".
   Spec changelog entry required. Budget target ≤ 8 USD.
+- **Done (F6):** `docs/spec.md` §7.8 theorem (e), `lean/TenantFlow/Proofs/Transparency.lean`: `Single t ℓ`
+  (`ℓ = rootCtx t` up to extensionality), `LabelFree` (§5 rows minus the flow checks; `call` additionally requires a
+  tenant-private tool), `transparency` (iff), `transparency_step` (`r = denied ↔ ¬ LabelFree`), `Single.step`
+  (preservation under explicit data hypotheses), `Single.of_init`, `Exec.transparency_denied` via (d). No sorry;
+  axioms recorded in `docs/proof-status.md`. Hypothesis stated on `ctx`, not on ghost origins (reason: changelog 0.3).
+
+### S22 [SONNET] Cite theorem (e) in deck, game and README
+- `docs/spec.md` §7.8 and `docs/proof-status.md` (F6 rows) are the source. Where the deck/README say "TenantFlow keeps
+  utility" or "legitimate workflows are allowed", cite `Model.transparency` (model) / `Exec.transparency_denied`
+  (executable) **with its hypothesis**: the agent's context is its tenant's trusted root label (`Single`), the tool
+  is tenant-private; only Cedar, unknown/non-private tool, `report` without parent, `receive` of a missing child
+  can deny. Do not claim a trace-level invariant (not proven, see §7.8 "Not stated").
+- Game: add the theorem to the "Warum?" panel of the levels where TenantFlow allows the legitimate action
+  (level 1 and the clean half of level 5/D9); regenerate `web/game/src/theorems.js` per `web/game/README.md`.
+- Benchmark suite 3 (utility) stays the measured evidence; (e) is the proven one. Keep F7 in mind: every sentence
+  must be covered exactly by the statement.
 
 ### S4 [SONNET] Baselines
 - `none` (no protection), `cedar-only`, `fides`: the label middleware of Microsoft Agent Framework (pin a version in

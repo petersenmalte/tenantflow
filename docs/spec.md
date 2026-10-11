@@ -1,6 +1,7 @@
 # TenantFlow – Formal specification
 
-Status: **v0.2** (task F0, adversarial review by `claude-fable-5-1` of the v0.1 draft by `claude-opus-5-5`).
+Status: **v0.3** (v0.2: task F0, adversarial review by `claude-fable-5-1` of the v0.1 draft by `claude-opus-5-5`;
+v0.3: task F6 adds theorem (e) transparency, §7.8).
 Theorem statements in this file are owned by FABLE tasks (see `CLAUDE.md` §3.3); changes require a changelog
 entry (§10). Review findings and the reasons for every v0.2 change: `docs/spec-review.md`.
 
@@ -370,8 +371,10 @@ Expected difficulty: medium; hard cap per `TASKS.md`.
 
 - Nothing about Cedar: a permissive policy loses least privilege inside a tenant, not isolation.
 - Nothing about users inside a tenant, side channels, tools with memory (A4), or the Python port beyond S3.
-- Nothing about utility: (a)–(c) hold for the monitor that denies everything; §7.7 is the evidence that the
-  intended flows are allowed, the benchmark (S5) measures utility.
+- About utility only (e) (§7.8): the flow checks are transparent on single-tenant trusted contexts. (a)–(c) alone
+  hold for the monitor that denies everything; §7.7 is the evidence that the intended flows are allowed, the
+  benchmark (S5) measures utility. (e) says nothing about Cedar's share of the denials and nothing once an agent
+  has read untrusted or foreign data (then a denial *is* the intended behaviour).
 
 ### 7.7 Sanity (non-vacuity) examples
 
@@ -388,6 +391,39 @@ Required alongside (a)–(c), proven by evaluation on `Exec` (`decide` / `rfl`),
 6. `call (ext k) v` with `extReg k = none` is denied, for a payload `v` that claims to be trusted.
 7. D9: a tainted insurer agent calls an insurer tool with `observers = {insurer}` passing bank data as the
    argument: denied. A clean insurer agent calling the same tool: allowed, and the event is in `obs_insurer`.
+
+### 7.8 (e) Transparency (utility)
+
+Definitions (`lean/TenantFlow/Proofs/Transparency.lean`):
+- `Single t ℓ :⇔ ℓ ⊑ rootCtx t ∧ t ∈ ℓ.owners`, i.e. `ℓ = ({t}, trusted)` up to extensionality: the agent depends
+  on nothing but its own tenant's trusted data.
+- `LabelFree cfg s a act`: the preconditions of the §5 rows **without the flow checks** (`hobs`/`hint` on `call`,
+  `hown` on `write`): the agent exists with an authenticated session; Cedar allows (`call`, `query`, `write`,
+  `delegate`); for `call` the tool is registered **and private to the tenant** (`observers ⊆ {t}`); `report` has
+  a parent; `receive c` names an existing child.
+
+> **Theorem (e).** Let `s.agents a = some σ`, `cfg.sessions σ.session = some p` and `Single p.tenant σ.ctx`.
+> Then for every action `act`:
+> - **(e1)** `(∃ r s', Allowed cfg D s a act r s') ↔ LabelFree cfg s a act` (`Model.transparency`), and on the
+>   step relation `Step cfg D s a act r s' → (r = denied ↔ ¬ LabelFree cfg s a act)` (`Model.transparency_step`).
+>   So the flow monitor never denies such an agent for a flow reason: only Cedar, an unregistered or non-private
+>   tool, a `report` without parent or a `receive` of a non-existent child can deny.
+> - **(e2) preservation** (`Model.Single.step`): after a step of `a` the context is still `Single p.tenant`,
+>   provided the step mixes in only labels `⊑ rootCtx p.tenant`: the result label of a called tool, the labels of
+>   the docs a `query` returns (their owners are `⊆ {t}` by the server-side filter, so only trustedness is
+>   assumed), and the child's `ctx` on `receive`. `write`, `delegate`, `report` and denials preserve it
+>   unconditionally. Root agents start `Single` (`Model.Single.of_init`).
+> - **(e-Exec)** via (d): `Exec.step cfg D s a act = (denied msg, s')` on an agent whose abstraction is `Single`
+>   implies `¬ LabelFree (α cfg) (α s) a act` (`Exec.transparency_denied`).
+
+Reading: a tenant whose workflow touches only its own trusted documents, tenant-private tools with trusted results,
+and its own children is governed by Cedar alone; TenantFlow adds no denial. The moment untrusted or foreign data
+enters the context, `Single` fails and (a)–(c) take over – that is the intended trade-off, not a utility loss.
+
+Not stated: a trace-level "always `Single`" invariant (it would need the hypotheses of (e2) for every step, which is
+a property of the data and the agent's choices, not of the monitor); nothing about Cedar's own denials.
+
+Expected difficulty: low; proven in F6 (no change to `Model/`).
 
 ---
 
@@ -496,3 +532,4 @@ end TenantFlow.Exec
 | 2026-10-10 | 0.2 (F2 details) | claude-fable-5-1 (F2) | No statement changed; (c) proven as `Model.noninterference` (`lean/TenantFlow/Proofs/Noninterference.lean`; `Strategy`, `run`, `LowEq`, `obs` defined there because `run` needs `Step.total`). `run` uses the step *function* `stepFn` chosen from `Step.total`; `Step.det` shows it is the unique step. A root agent's first observation is `payload (prompt s)`, a child's is `payload task`. The simulation relation needed two strengthenings of the §7.4 sketch: (iv) children of a clean agent exist in one run iff in the other (otherwise `receive c` could be denied in one run and allowed in the other for a clean parent); and clause (iii) compares clean agents only *up to the outbox*, with outboxes required equal only for a clean child of a clean parent (a tainted parent may `receive`, i.e. clear the outbox of, a clean child in one run only; the child's own behaviour does not depend on its outbox). "Clean" additionally records that the session tenant is `B` (D5 as part of the relation instead of a separate invariant). `Fresh` (F1b) is part of the relation. |
 | 2026-10-10 | 0.2 (F3 details) | claude-fable-5-1 (F3) | No statement changed; (d) proven in `lean/TenantFlow/Proofs/Refinement.lean`. Details decided per §8: `α` is `Exec.Config.abs` / `Exec.Data.abs` / `Exec.State.abs` (owner lists become membership predicates, association lists become lookup functions; `Data` is abstracted as well because `index₀` carries labels), `⌊·⌋` is `Exec.Response.abs`; `Model.rank` is instantiated as `(sortByScore (score q ·.payload) ·).take topK` over abstract docs (`sortByScore` made generic in the element type, `rank_mem` is `mem_sortByScore`); `Exec` now uses the model's `AgentId`/`childId`. (d1) `Exec.refines`, (d2) `Exec.refines_init`. Corollaries proven: `Exec.refines_denied` (a denial leaves the `Exec` state unchanged and no allowed model step exists), `Exec.refines_trace` / `Exec.refines_ghost` (the abstraction of every `runTrace` state is `Model.Reachable` / `GReachable` from the initial state, so (a), (b2) and `ctx_mono` apply to `Exec` traces). Not done: the (c) corollary for `Exec` (`Exec.run` does not exist yet; `obs` commuting with `α` is straightforward once it does) – optional task F4. |
 | 2026-10-11 | 0.2 (F4 details) | claude-fable-5-1 (F4) | No statement changed; the (c) corollary of §7.5 is proven in `lean/TenantFlow/Proofs/NoninterferenceExec.lean`. `Exec.run` is `Model.run` with `Exec.step` in place of `stepFn` (same `Strategy`/schedule; `histUpdate` is applied to `⌊r⌋`, so strategies are reason-blind exactly as in the model, which collapses all denial reasons). `Exec.run_abs`: `α (Exec.run cfg strat sched D) = Model.run (α cfg) strat sched (α D)` (lockstep via (d1) + `Step.eq_stepFn` and (d2)); `Exec.obs_abs`: `α (obs_B evs) = Model.obs_B (α evs)`; `Exec.noninterference`: `LowEq (α cfg) B (α D₁) (α D₂) → α (obs_B (Exec.run … D₁)) = α (obs_B (Exec.run … D₂))`, i.e. the `B`-observable `Exec` events agree in tenant, tool, arguments and label-as-set (`α` on events only changes the label representation). Low equivalence is stated on the abstractions; no separate `Exec.LowEq` was introduced. |
+| 2026-10-11 | 0.3 | claude-fable-5-1 (F6) | **New theorem (e) transparency (§7.8)**, the utility counterpart of (a)–(d); §7.6 updated accordingly. Statement shape decided in F6: the hypothesis "every origin the agent may depend on is owned by its tenant and trusted" is stated directly on the context (`Single t ctx`, i.e. `ctx = rootCtx t` up to extensionality) rather than through ghost `deps`, because `Inv` only gives the lower bound `label₀ o ⊑ ctx` (soundness), not the upper bound `ctx ⊑ ⨆ label₀ (deps a)` that the origin phrasing would need (a new invariant, out of budget and not needed: by (b) `ctx` dominates the origins, so `Single ctx` *implies* the origin condition). (e1) is an equivalence, so it also lists exactly the remaining denial reasons. The private-tool condition `observers ⊆ {t}` is part of `LabelFree`, not of the flow checks: a tool observed by another tenant is a cross-tenant channel, and denying it on a `Single` context is correct (`hobs` with `t ∈ owners` forces every observer to be `t`). (e2) is a one-step preservation lemma with explicit data hypotheses; no trace-level invariant (see §7.8). Proven in `lean/TenantFlow/Proofs/Transparency.lean`, `Model/` unchanged; no sorry. |
