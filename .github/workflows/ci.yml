@@ -1,0 +1,71 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan (toolchain is pinned in lean/lean-toolchain)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: lake build
+        working-directory: lean
+        run: lake build
+      - name: Build oracle
+        working-directory: lean
+        run: lake build oracle
+      - name: No sorry/admit/axiom, #print axioms for the documented theorems
+        run: scripts/check-lean.sh
+      - name: Oracle hand-written traces
+        working-directory: lean
+        run: Oracle/tests/run.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oracle
+          path: lean/.lake/build/bin/oracle
+          if-no-files-found: error
+
+  python:
+    needs: lean
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: oracle
+          path: oracle-bin
+      - name: Make oracle executable
+        run: chmod +x oracle-bin/oracle
+      - name: Lint
+        working-directory: python
+        run: uv run ruff check . ../bench
+      - name: Tests (differential test with a small sample)
+        working-directory: python
+        env:
+          TF_ORACLE: ${{ github.workspace }}/oracle-bin/oracle
+          TF_EXAMPLES: "100"
+        run: uv run pytest -q
+      - name: Benchmark harness runs (small)
+        working-directory: python
+        run: uv run python ../bench/run.py --episodes 100
+
+  game:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JS tests of the game monitor (once web/game exists, task S10)
+        run: |
+          if [ -f web/game/package.json ]; then
+            cd web/game && npm ci && npm test
+          else
+            echo "web/game/package.json not present yet; skipping"
+          fi

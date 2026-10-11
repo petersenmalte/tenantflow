@@ -31,7 +31,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S5 | [SONNET] | S3, S4 | done | Benchmark suites, adversarial fuzzing agent, latency, plots |
 | S6 | [SONNET] | S5 | open | OPTIONAL – small real-LLM utility run (ask user first, costs API money) |
 | S7 | [SONNET] | S3 | done | CLI `tenantflow check` (CI mode with counterexamples) |
-| S8 | [SONNET] | S1, S3 | open | GitHub Actions CI |
+| S8 | [SONNET] | S1, S3 | done | GitHub Actions CI |
 | S9 | [SONNET] | S5 | open | Quarto slide deck |
 | S10 | [SONNET] | S3, S5 | open | Browser game "Leak the Vault" |
 | O2 | [OPUS] | all above | open | Final review: claims vs. proofs, README, limitations |
@@ -201,3 +201,10 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 - `python/src/tenantflow/{check,cli}.py` (`tenantflow check`, entry point in `pyproject.toml`), `examples/shared-rag.json`,
   tests `python/tests/test_cli.py`, README section with a GitHub Action example. `violations` moved to `tenantflow.check`
   (bench imports it from there).
+
+### S8 – done (notes)
+- `.github/workflows/ci.yml`: jobs `lean` (lake build, oracle build, `scripts/check-lean.sh`, oracle traces; uploads the oracle),
+  `python` (ruff, pytest incl. differential test with 100 examples via `TF_ORACLE`, small benchmark run), `game` (runs
+  `npm ci && npm test` in `web/game` once it has a `package.json`; S10 must provide an `npm test`).
+- `scripts/check-lean.sh`: no `sorry`/`admit`/`axiom` in `lean/TenantFlow`, `TenantFlow.lean`, `lean/Oracle`; `#print axioms` for every
+  `Model.*`/`Exec.*` name in the "proven"/"defined" rows of `docs/proof-status.md` (unknown names fail, so the doc cannot drift).
