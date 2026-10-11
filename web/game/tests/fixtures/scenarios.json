@@ -400,7 +400,7 @@
      "action": {
       "op": "delegate",
       "role": "ops",
-      "task": "notify"
+      "task": "bank account CANARY-BANK iban"
      }
     },
     {

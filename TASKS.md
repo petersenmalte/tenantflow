@@ -42,7 +42,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S15 | [SONNET] | – | open | APIsec article never read (403): user reads it, verify our forgery cases and citations against it |
 | S16 | [SONNET] | S10 | done | Randomised differential test JS game monitor ↔ Lean oracle (as S3 for Python) |
 | S17 | [SONNET] | S9 | open | Deck: navigation bug (only slide 1 reachable), redesign: interactive, staged, intuitive |
-| S18 | [SONNET] | S10, S16 | open | Game: redesign: intuitive, guided, animated; verify in a real browser |
+| S18 | [SONNET] | S10, S16 | done | Game: redesign: intuitive, guided, animated; verify in a real browser |
 | S19 | [SONNET] | S5 | open | Benchmark: rerun on a clean commit; report monitor-only latency separately from Cedar |
 | S20 | [SONNET] | S2 | open | Decide/close S2 gaps: Cedar schema via cedar-for-agents generator, gateway as real MCP |
 | S21 | [SONNET] | – | open | `.gitignore`: dangling comment "Personal German user guide" without a pattern |
@@ -213,6 +213,10 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
   Visible chips that move between agents/index/tools, one clear goal per level, immediate feedback, the "Warum?"
   panel as in the brief. Lean links with file + line anchors (`noninterference` lives in another file).
   Check in a real browser (layout, dark mode, phone width, keyboard).
+- Done (Opus): rebuilt as a drag & drop board (`src/play.js` logic, `src/board.js` view, `src/game.js` shell), result
+  card comparing all four modes, two-layer explanations, Lean line links (`src/theorems.js`), sandbox replays the
+  fuzzer's counterexample on the board. 67 JS tests. Checked in headless Chrome via CDP (1280 px, 390 px, dark mode,
+  real mouse drag). Limits in `web/game/README.md` (no screen-reader / real-touch test).
 
 ### S19 [SONNET] Benchmark provenance and latency
 - `results.json` has `meta.git = 4775e8a` (S4) but was produced by uncommitted S5 code; S7 moved `violations`

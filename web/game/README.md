@@ -1,38 +1,51 @@
 # Leak the Vault
 
-Static browser game (no server, no dependencies): open `index.html`. You play a compromised agent on a platform
-that shares one RAG index between a bank (blue) and an insurer (gold); untrusted data is red and dashed.
-Protection switch: **Off / Cedar / FIDES / TenantFlow**. The "Why?" panel explains each decision in one sentence and
-links the Lean theorem and the deck slide (deck: `web/deck`; links `../deck/index.html#/N` with N = content slide, the title slide is `#/0`).
+Static browser game (no server, no dependencies): open `index.html`. A bank (blue) and an insurer (gold) share one AI
+platform; untrusted data is red and dashed. You play a hijacked agent and try to get the bank's data to the insurer.
 
-| Level | Attempt | Lesson |
+**How to play:** drag a tile or a coloured data chip onto a highlighted place (mouse or touch), or click/tap it and then
+click the place; with the keyboard, Tab to it, Enter to pick up, Tab to a highlighted place, Enter to drop, Escape to
+cancel. Every move runs the real monitor. The chip lands or bounces back with a one-sentence reason; "Why? (details)"
+shows the monitor rule, the Lean theorem (with line link) and the slide. Switch the protection between
+**Off / Cedar / FIDES / TenantFlow**; after each level a card compares the same attack against all four.
+
+| Level | Move | Lesson |
 |---|---|---|
-| 1 | read the bank's vault directly | Cedar already blocks this |
-| 2 | vault → write to the shared index → query as insurer | every call is Cedar-allowed; TenantFlow labels the document and filters at query |
-| 3 | forged `security_label` in fetched data, then `pay` | FIDES accepts the label; TenantFlow takes labels only from the registry |
-| 4 | delegate to a sub-agent with role `ops` | the child inherits the parent's label |
-| 5 | sandbox: edit a Cedar allow-list, run a seeded random attacker | a leak is shown as a shrunk call sequence |
+| 1 | vault → insurer agent | Cedar already blocks a direct read |
+| 2 | vault → bank agent → index → insurer agent | every step is allowed; TenantFlow keeps the label and filters the search |
+| 3 | web ticket (claims "trusted") → bank agent → Payments | FIDES believes the label inside the data; TenantFlow does not |
+| 4 | vault → bank agent → helper (role ops) → Insurer inbox | the helper inherits the bank's label |
+| 5 | edit the Cedar policy, let a random attacker search | a found leak is replayed step by step on the board |
 
-## Honesty notes
-* Modes `none`, `cedar-only`, `fides` are the benchmark baselines (`python/src/tenantflow/baselines.py`); `fides` is a
-  re-implementation of the label logic, not the Microsoft middleware (see `bench/README.md`).
-* The fuzzer is a bounded random search. "No violation found" is not a proof; for TenantFlow the guarantee is
-  `Model.isolation` / `Model.isolation_int` under the assumptions in `docs/spec.md` (trusted session, adapter and
-  registry; no side channels). The sandbox has no `vault` tool on purpose: a tool that returns bank-labelled data to an
-  insurer principal is a registry error (assumption A2) that the monitor does not claim to catch.
-* In level 2 the write step is *allowed* under TenantFlow; the leak is stopped at the query, because the document keeps
-  the bank's label.
+URL parameters: `?level=1..5&mode=none|cedar-only|fides|tenantflow`.
 
-* Not yet checked in a real browser (layout, dark mode, keyboard use): the UI was smoke-tested with a fake DOM in Node only.
+## Code
+`src/monitor.js` (JS port of `Exec.step` + the three baselines), `src/levels.js`, `src/rules.js` (goals, fuzzer,
+explanations), `src/play.js` (game logic without DOM: drag moves → monitor actions), `src/board.js` (view: drag & drop,
+animation; also used by the deck's live widgets), `src/game.js` (shell), `src/theorems.js` (generated Lean links).
 
-## Tests
-`npm test` (Node ≥ 20) checks the JS monitor against
-1. the five hand-written Lean oracle traces (`lean/Oracle/tests`), exact equality;
-2. the scripted attacks of the levels in all four modes, against `tests/fixtures/expected.json`
-   (TenantFlow = output of `lake exe oracle`, the others = Python baselines);
-3. the expected outcome of each level, and the fuzzer (finds leaks without TenantFlow, none with it).
+## Tests (`npm test`, Node ≥ 20)
+1. The 5 hand-written Lean oracle traces, exact equality.
+2. Randomised corpus (`tests/fixtures/corpus.json.gz`, 2900 scenarios from the Hypothesis strategies of
+   `python/tests/test_differential.py`): JS TenantFlow vs Lean oracle, JS baselines vs Python baselines.
+3. Level scripts in all four modes vs reference outputs; expected win/lose per level and mode.
+4. The drag moves of each level (`tests/play.test.js`), the fuzzer, and that every cited theorem exists in `lean/`.
 
-Regenerate fixtures after editing `src/levels.js` (needs the built oracle: `cd lean && lake build oracle`):
+Regenerate after editing levels or `lean/` (needs `cd lean && lake build oracle`):
 ```
 node scripts/dump-scenarios.js && (cd ../../python && uv run python ../web/game/scripts/gen_expected.py)
+(cd ../../python && uv run python ../web/game/scripts/gen_corpus.py)
+node scripts/gen_theorems.js     # Lean line links; the test only warns when they drift
 ```
+
+## Deviations and limits
+* Modes `none`, `cedar-only`, `fides` are the benchmark baselines; `fides` is a re-implementation of the label logic of
+  agent-framework-core 1.5.0, not the Microsoft middleware (see `bench/README.md`).
+* Level 2 under TenantFlow: the write is allowed (the entry keeps the bank's label); the leak is stopped at the search.
+* Level 5 has no vault tool: a tool that hands bank-labelled data to an insurer principal is a registry error
+  (assumption A2), which the monitor does not claim to catch. Bank data lives in the index there.
+* The fuzzer is a bounded random search; "nothing found" is not a proof. The guarantee is the Lean theorem, under the
+  spec's assumptions (trusted session, adapter, registry; complete mediation; no side channels).
+* The JS monitor is tested, not proven, against the oracle; the oracle is `Exec.step`, which theorem (d) relates to the model.
+* Checked in headless Chrome (desktop 1280 px, phone 390 px, dark mode, real mouse drag, click-to-place); not yet checked
+  with a screen reader or on a real touch device. The "Why?" panel is called "Why?" (repository language is English).
