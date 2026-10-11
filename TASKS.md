@@ -28,7 +28,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | F3 | [FABLE] | F2 (or G2 fallback) | done | Theorem (d) refinement: executable monitor implements the model |
 | F4 | [FABLE] | F3, S1 | open (optional) | Lift (c) to `Exec` traces: `Exec.run`, `obs` commutes with `α` – only if budget allows, not needed for the deck |
 | S4 | [SONNET] | S2 | done | Baselines: none, Cedar-only, FIDES middleware |
-| S5 | [SONNET] | S3, S4 | open | Benchmark suites, adversarial fuzzing agent, latency, plots |
+| S5 | [SONNET] | S3, S4 | done | Benchmark suites, adversarial fuzzing agent, latency, plots |
 | S6 | [SONNET] | S5 | open | OPTIONAL – small real-LLM utility run (ask user first, costs API money) |
 | S7 | [SONNET] | S3 | open | CLI `tenantflow check` (CI mode with counterexamples) |
 | S8 | [SONNET] | S1, S3 | open | GitHub Actions CI |
@@ -189,3 +189,10 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
   `python/tests/test_baselines.py`, rationale and limits in `bench/README.md`.
 - FIDES is a re-implementation of the label logic of `agent-framework-core==1.5.0` (optional extra `fides`), because the
   middleware needs a full agent runtime and 1.21.0 is hardened. The APIsec article was not fetchable (403).
+
+### S5 – done (notes)
+- `bench/{world,suites,fuzz,run,plot}.py`, results + plots in `bench/results/`, method and caveats in `bench/README.md`,
+  harness tests `python/tests/test_bench.py`. Matplotlib is in the dependency group `bench`.
+- Headline (seed 1, 2000 episodes): none / Cedar-only / FIDES-1.5.0-logic violate in ~100 % of fuzz episodes and 5/5
+  leak scenarios; FIDES blocks only the unlabelled control in suite 2 (3/4 forgery succeed); TenantFlow 0 violations,
+  8/8 utility. Latency ~170 µs per decision, all Cedar (cedarpy).

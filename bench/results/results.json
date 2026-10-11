@@ -1,0 +1,363 @@
+{
+ "forgery": {
+  "cedar-only": {
+   "ci95": [
+    0.5101,
+    1.0
+   ],
+   "k": 4,
+   "n": 4,
+   "per_scenario": {
+    "2a-forged-tool-result": true,
+    "2b-forged-document": true,
+    "2c-missing-field-default": true,
+    "2d-unlabelled-untrusted": true
+   },
+   "rate": 1.0
+  },
+  "fides": {
+   "ci95": [
+    0.3006,
+    0.9544
+   ],
+   "k": 3,
+   "n": 4,
+   "per_scenario": {
+    "2a-forged-tool-result": true,
+    "2b-forged-document": true,
+    "2c-missing-field-default": true,
+    "2d-unlabelled-untrusted": false
+   },
+   "rate": 0.75
+  },
+  "none": {
+   "ci95": [
+    0.5101,
+    1.0
+   ],
+   "k": 4,
+   "n": 4,
+   "per_scenario": {
+    "2a-forged-tool-result": true,
+    "2b-forged-document": true,
+    "2c-missing-field-default": true,
+    "2d-unlabelled-untrusted": true
+   },
+   "rate": 1.0
+  },
+  "tenantflow": {
+   "ci95": [
+    0.0,
+    0.4899
+   ],
+   "k": 0,
+   "n": 4,
+   "per_scenario": {
+    "2a-forged-tool-result": false,
+    "2b-forged-document": false,
+    "2c-missing-field-default": false,
+    "2d-unlabelled-untrusted": false
+   },
+   "rate": 0.0
+  }
+ },
+ "fuzz": {
+  "cedar-only": {
+   "any": {
+    "ci95": [
+     0.9949,
+     0.9992
+    ],
+    "k": 1996,
+    "rate": 0.998
+   },
+   "confidentiality": {
+    "ci95": [
+     0.9949,
+     0.9992
+    ],
+    "k": 1996,
+    "rate": 0.998
+   },
+   "episodes": 2000,
+   "integrity": {
+    "ci95": [
+     0.081,
+     0.1065
+    ],
+    "k": 186,
+    "rate": 0.093
+   }
+  },
+  "fides": {
+   "any": {
+    "ci95": [
+     0.9949,
+     0.9992
+    ],
+    "k": 1996,
+    "rate": 0.998
+   },
+   "confidentiality": {
+    "ci95": [
+     0.9949,
+     0.9992
+    ],
+    "k": 1996,
+    "rate": 0.998
+   },
+   "episodes": 2000,
+   "integrity": {
+    "ci95": [
+     0.0454,
+     0.0653
+    ],
+    "k": 109,
+    "rate": 0.0545
+   }
+  },
+  "none": {
+   "any": {
+    "ci95": [
+     0.9949,
+     0.9992
+    ],
+    "k": 1996,
+    "rate": 0.998
+   },
+   "confidentiality": {
+    "ci95": [
+     0.9949,
+     0.9992
+    ],
+    "k": 1996,
+    "rate": 0.998
+   },
+   "episodes": 2000,
+   "integrity": {
+    "ci95": [
+     0.081,
+     0.1065
+    ],
+    "k": 186,
+    "rate": 0.093
+   }
+  },
+  "tenantflow": {
+   "any": {
+    "ci95": [
+     0.0,
+     0.0019
+    ],
+    "k": 0,
+    "rate": 0.0
+   },
+   "confidentiality": {
+    "ci95": [
+     0.0,
+     0.0019
+    ],
+    "k": 0,
+    "rate": 0.0
+   },
+   "episodes": 2000,
+   "integrity": {
+    "ci95": [
+     0.0,
+     0.0019
+    ],
+    "k": 0,
+    "rate": 0.0
+   }
+  }
+ },
+ "latency": {
+  "cedar-only": {
+   "mean_us": 99.3,
+   "n": 6000,
+   "p50_us": 169.54,
+   "p95_us": 179.08,
+   "p99_us": 185.21
+  },
+  "fides": {
+   "mean_us": 100.82,
+   "n": 6000,
+   "p50_us": 169.79,
+   "p95_us": 182.79,
+   "p99_us": 197.0
+  },
+  "none": {
+   "mean_us": 1.71,
+   "n": 6000,
+   "p50_us": 0.83,
+   "p95_us": 7.5,
+   "p99_us": 11.79
+  },
+  "tenantflow": {
+   "mean_us": 98.54,
+   "n": 6000,
+   "p50_us": 169.17,
+   "p95_us": 176.79,
+   "p99_us": 181.46
+  }
+ },
+ "leak": {
+  "cedar-only": {
+   "ci95": [
+    0.5655,
+    1.0
+   ],
+   "k": 5,
+   "n": 5,
+   "per_scenario": {
+    "1a-direct-query": true,
+    "1b-summary-laundering": true,
+    "1c-cross-tenant-sink": true,
+    "1d-sink-after-delegation": true,
+    "1e-reverse-direction": true
+   },
+   "rate": 1.0
+  },
+  "fides": {
+   "ci95": [
+    0.5655,
+    1.0
+   ],
+   "k": 5,
+   "n": 5,
+   "per_scenario": {
+    "1a-direct-query": true,
+    "1b-summary-laundering": true,
+    "1c-cross-tenant-sink": true,
+    "1d-sink-after-delegation": true,
+    "1e-reverse-direction": true
+   },
+   "rate": 1.0
+  },
+  "none": {
+   "ci95": [
+    0.5655,
+    1.0
+   ],
+   "k": 5,
+   "n": 5,
+   "per_scenario": {
+    "1a-direct-query": true,
+    "1b-summary-laundering": true,
+    "1c-cross-tenant-sink": true,
+    "1d-sink-after-delegation": true,
+    "1e-reverse-direction": true
+   },
+   "rate": 1.0
+  },
+  "tenantflow": {
+   "ci95": [
+    0.0,
+    0.4345
+   ],
+   "k": 0,
+   "n": 5,
+   "per_scenario": {
+    "1a-direct-query": false,
+    "1b-summary-laundering": false,
+    "1c-cross-tenant-sink": false,
+    "1d-sink-after-delegation": false,
+    "1e-reverse-direction": false
+   },
+   "rate": 0.0
+  }
+ },
+ "meta": {
+  "date": "2026-10-11T09:25:54+00:00",
+  "episode_length": 30,
+  "episodes": 2000,
+  "git": "4775e8a",
+  "machine": "arm64",
+  "python": "3.15.0",
+  "seed": 1,
+  "variants": [
+   "none",
+   "cedar-only",
+   "fides",
+   "tenantflow"
+  ]
+ },
+ "utility": {
+  "cedar-only": {
+   "ci95": [
+    0.6756,
+    1.0
+   ],
+   "k": 8,
+   "n": 8,
+   "per_scenario": {
+    "3a-roundtrip": true,
+    "3b-fetch-then-deliver": true,
+    "3c-delegation": true,
+    "3d-two-tenants": true,
+    "3e-trusted-tool": true,
+    "3f-own-sink": true,
+    "3g-trusted-lookup": true,
+    "3h-shared-team-doc": true
+   },
+   "rate": 1.0
+  },
+  "fides": {
+   "ci95": [
+    0.6756,
+    1.0
+   ],
+   "k": 8,
+   "n": 8,
+   "per_scenario": {
+    "3a-roundtrip": true,
+    "3b-fetch-then-deliver": true,
+    "3c-delegation": true,
+    "3d-two-tenants": true,
+    "3e-trusted-tool": true,
+    "3f-own-sink": true,
+    "3g-trusted-lookup": true,
+    "3h-shared-team-doc": true
+   },
+   "rate": 1.0
+  },
+  "none": {
+   "ci95": [
+    0.6756,
+    1.0
+   ],
+   "k": 8,
+   "n": 8,
+   "per_scenario": {
+    "3a-roundtrip": true,
+    "3b-fetch-then-deliver": true,
+    "3c-delegation": true,
+    "3d-two-tenants": true,
+    "3e-trusted-tool": true,
+    "3f-own-sink": true,
+    "3g-trusted-lookup": true,
+    "3h-shared-team-doc": true
+   },
+   "rate": 1.0
+  },
+  "tenantflow": {
+   "ci95": [
+    0.6756,
+    1.0
+   ],
+   "k": 8,
+   "n": 8,
+   "per_scenario": {
+    "3a-roundtrip": true,
+    "3b-fetch-then-deliver": true,
+    "3c-delegation": true,
+    "3d-two-tenants": true,
+    "3e-trusted-tool": true,
+    "3f-own-sink": true,
+    "3g-trusted-lookup": true,
+    "3h-shared-team-doc": true
+   },
+   "rate": 1.0
+  }
+ }
+}
