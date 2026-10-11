@@ -55,7 +55,7 @@
       goal: "leak", hint: "Vault → bank agent. Then the bank's chip → shared index. Then that index entry → insurer agent.",
       mission: "Get the bank's data into the insurer agent, using only allowed steps.",
       lesson: "Each step alone was allowed. Only TenantFlow remembers that the index entry came from the bank.",
-      lessonDetail: "Writing is allowed under TenantFlow too, but the entry keeps the bank's label. The insurer's search only returns entries labelled for the insurer, so the bank's entry never comes back.",
+      lessonDetail: "Writing is allowed under TenantFlow too, but the entry keeps the bank's label. The insurer's search only returns entries the insurer may read, so the bank's entry never comes back.",
       theorems: ["Model.isolation", "Model.noninterference", "Exec.noninterference"],
       scenario: {
         sessions: [{ sid: "1", tenant: "bank", user: "u1", role: "banker" }, { sid: "2", tenant: "insure", user: "u2", role: "analyst" }],
@@ -111,7 +111,7 @@
       goal: "violation", sandbox: true, hint: "Untick permits, then let the attacker try. Compare Cedar with TenantFlow.",
       mission: "Write the Cedar policy yourself, then let a random attacker search for a leak.",
       lesson: "With TenantFlow the attacker finds nothing, whatever your policy says.",
-      lessonDetail: "The fuzzer is a bounded random search, not a proof. For TenantFlow the guarantee is the theorem below, under the assumptions of the spec (trusted session, adapter and registry, no side channels).",
+      lessonDetail: "The fuzzer is a bounded random search, not a proof. For TenantFlow the guarantee is the theorem below, under the assumptions of the spec: trusted session, adapter and tool registry, complete mediation, stateless tools, Cedar sees only principal and action, agents do not see denial reasons, no side channels incl. data-independent scheduling (A1–A8 in docs/spec.md §9).",
       theorems: ["Model.isolation", "Model.isolation_int"],
       scenario: {
         sessions: baseSessions("analyst"),

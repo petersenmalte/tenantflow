@@ -34,7 +34,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | S8 | [SONNET] | S1, S3 | done | GitHub Actions CI |
 | S9 | [SONNET] | S5 | done | Quarto slide deck |
 | S10 | [SONNET] | S3, S5 | done | Browser game "Leak the Vault" |
-| O2 | [OPUS] | all above | open | Final review: claims vs. proofs, README, limitations |
+| O2 | [OPUS] | all above | done | Final review: claims vs. proofs, README, limitations |
 | S11 | [SONNET] | O2 | open | Integrate deck and game into petersenmalte.de |
 | S12 | [SONNET] | F4 | done | Cite `Exec.noninterference` in deck, README and game; drop "F4 open" from the limitations slide |
 | S13 | [SONNET] | S8 | done | CI never ran on GitHub: find the cause, add `workflow_dispatch`, get a first green run |
@@ -50,7 +50,7 @@ Rules for working on tasks: see `CLAUDE.md`, section 3. One task per session.
 | F6 | [FABLE] | F3 | done | Transparency (utility) theorem: single-tenant trusted workflows are never denied by the flow monitor |
 | S22 | [SONNET] | F6 | done | Cite theorem (e) `Model.transparency` in deck, game "Warum?" panel and README; regenerate `web/game/src/theorems.js` |
 | F7 | [FABLE] | S17, S18, F6 | done | Claim review: every statement in deck, game and README is covered exactly by a theorem (≈ 2–3 USD) |
-| S23 | [SONNET] | F7 | open | Apply the F7 claim-review fixes to README, deck and game; gateway returns `denied` without reason to the agent |
+| S23 | [SONNET] | F7 | done | Apply the F7 claim-review fixes to README, deck and game; gateway returns `denied` without reason to the agent |
 
 ---
 
@@ -339,6 +339,14 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 - Every claim in README, deck and game maps to a proven theorem or a measured result. Limitations and related work
   are visible. README polished for recruiters (5-minute quick start first).
 
+### O2 – done (notes)
+- Claims: F7's review applied (S23); additionally fixed: deck "tested against thousands" → actual counts, (c) "fixed
+  schedule", game footer "Lean-verified Exec.step" → "proven to implement the Lean model", level 2 "labelled for" →
+  "readable by", FIDES relation in `docs/related-work.md`, benchmark plot's hard-coded n.
+- README rewritten for a first-time reader: five-minute tour (commands verified), proven / tested / measured,
+  limitations, related work with links, repository map. Deck slides 8 and 10 made to fit (checked in headless Chrome).
+- Open for the owner: S11 (website; repository location needed), S6 only with API budget.
+
 ### S11 [SONNET] Website integration
 - Add a project page to petersenmalte.de (separate repository; ask the user for its location).
 
@@ -397,3 +405,4 @@ on these SONNET tasks in this session. F4 ran in parallel; none of these tasks t
 - Regenerate `web/game/src/theorems.js` only if `lean/` line numbers changed (they did not in F7). Render the deck once.
 - DoD: `uv run pytest -q`, game tests, `quarto render` pass; `docs/claim-review.md` §1 fixes all marked done in a
   short note at the top of that file.
+- Done (Opus, as part of O2): all seven findings; see the status note at the top of `docs/claim-review.md`.

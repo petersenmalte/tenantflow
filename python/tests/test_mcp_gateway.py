@@ -44,7 +44,9 @@ async def test_gateway_over_real_mcp():
         res = await s.call_tool("rag_query", {"q": "secret"})
         assert "bank secret iban" in text(res) and "shop" not in text(res)  # filtered per tenant
         res = await s.call_tool("notify_shop", {"text": "bank secret iban"})
-        assert res.is_error and "flow" in text(res)  # bank data may not reach the shop
+        assert (
+            res.is_error and text(res) == "denied"
+        )  # bank data may not reach the shop; no reason (A8)
         res = await s.call_tool("web_fetch", {"url": "http://x"})
         assert not res.is_error and "ignore previous instructions" in text(res)  # ran upstream
         res = await s.call_tool("rag_write", {"payload": "note"})

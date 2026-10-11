@@ -111,4 +111,25 @@ def test_gateway():
     assert not call("deliver", {"to": "x"})["isError"]
     assert call("rag_write", {"payload": "p"})["isError"] is False
     assert gw.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})["result"]["tools"]
+
+
+def test_gateway_hides_denial_reason(caplog):
+    """A8: the agent sees only `denied`; the reason is logged for the operator."""
+    import logging
+
+    gw = Gateway(demo_monitor(), upstream)
+    req = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+            "name": "nope",
+            "arguments": {},
+            "_meta": {"agent": {"session": "1", "path": []}},
+        },
+    }
+    with caplog.at_level(logging.INFO, logger="tenantflow.gateway"):
+        res = gw.handle(req)["result"]
+    assert res["isError"] and res["content"] == [{"type": "text", "text": "denied"}]
+    assert "unregistered tool" in caplog.text
     assert "error" in gw.handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {}})

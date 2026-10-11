@@ -5,6 +5,14 @@ Reviewed on 2026-10-11 (claude-fable-5-1, task F7) at revision `7a9e2c7`. Every 
 that states a guarantee was compared with the Lean statements (`lean/TenantFlow/Proofs*/`) and the assumptions of
 `docs/spec.md` §9. Required text changes are task **S23** in `TASKS.md`. Theorem statements are unchanged.
 
+**Status (O2, claude-opus-5-5, 2026-10-11): all findings 1–7 fixed in S23.** 1, 2: deck slides 8/10 wording;
+3: README row (e); 4: README row (b), deck slide 8 "tested, not proven" line, game `rules.js` cites `Model.no_launder`
+next to `Model.isolation_int` and states that payload independence is by construction and tested, game README;
+5: README, deck slide 8, game (`game.js` result card, `levels.js` level 5, `index.html`, README) list A1–A8;
+6: the Python gateway and the MCP gateway return only `denied` to the agent and log the reason
+(`tests/test_monitor.py::test_gateway_hides_denial_reason`, `tests/test_mcp_gateway.py`); the game keeps showing
+reasons in its operator view ("Why?"); 7: write denial cites `Model.no_launder`.
+
 Severity: **A** = overstated (says more than the theorem), **B** = incomplete hypothesis or assumption,
 **C** = loose citation (true, but the cited theorem is not the one that says it).
 

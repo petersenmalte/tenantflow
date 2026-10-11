@@ -6,6 +6,9 @@ upstream. The agent identity comes from ``params._meta.agent``
 (``{"session": sid, "path": [...]}``), set by the trusted session layer, never by model output.
 Result labels come from the tool registry.
 
+A denied call returns only ``denied`` to the agent; the reason goes to the log (logger
+``tenantflow.gateway``). The theorems assume agents do not observe denial reasons (spec §9, A8).
+
 Built-in tools: ``rag_query`` (``{"q": ...}``), ``rag_write`` (``{"payload": ...}``).
 All other tools are registered in the monitor's registry and forwarded to
 ``upstream(name, arguments)``.
@@ -14,6 +17,7 @@ All other tools are registered in the monitor's registry and forwarded to
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from collections.abc import Callable
 from typing import Any, TextIO
@@ -21,6 +25,7 @@ from typing import Any, TextIO
 from .monitor import Action, Monitor, parse_agent
 
 Upstream = Callable[[str, Any], Any]
+log = logging.getLogger("tenantflow.gateway")
 
 BUILTIN = {"rag_query": "query", "rag_write": "write"}
 
@@ -44,8 +49,9 @@ class Gateway:
     def call(self, agent_json: dict[str, Any], name: str, args: dict[str, Any]) -> dict[str, Any]:
         agent = parse_agent(agent_json)
         resp = self.monitor.step(agent, self._action(name, args))
-        if resp.denied:
-            return {"isError": True, "content": [{"type": "text", "text": f"denied: {resp.value}"}]}
+        if resp.denied:  # A8: the reason is for the operator, not for the agent
+            log.info("denied %s %s: %s", agent, name, resp.value)
+            return {"isError": True, "content": [{"type": "text", "text": "denied"}]}
         if resp.kind == "payloads":
             value: Any = resp.value
         elif resp.kind == "payload":  # ext tool with a labelled result: run it upstream

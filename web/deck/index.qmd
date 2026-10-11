@@ -170,7 +170,7 @@ $$\mathrm{readable}\big(u,\ \mathrm{label}_0(o)\big)$$
 Whatever the agent does, and whatever the Cedar policy says.
 :::
 
-## What the proof covers, and what it does not
+## What the proof covers, and what it does not {.dense}
 
 :::: {.columns}
 ::: {.column width="50%"}
@@ -178,24 +178,27 @@ Whatever the agent does, and whatever the Cedar policy says.
 **Proven in Lean 4** (no `sorry`)
 
 - **(a)** isolation – `Model.isolation`, `Model.isolation_int`
-- **(b)** no forgery, no laundering – `Model.no_launder`
-- **(c)** noninterference: what the insurer sees depends only on data it may read – `Model.noninterference`, also for the executable monitor: `Exec.noninterference`
+- **(b)** no forgery, no laundering: every label dominates the labels of its sources, integrity included – `Model.no_launder`
+- **(c)** noninterference: what the insurer sees depends only on data it may read (fixed schedule) – `Model.noninterference`, also for the executable monitor: `Exec.noninterference`
 - **(d)** the executable monitor implements the model – `Exec.refines`
-- **(e)** no needless denials: an agent that has read only its own tenant's trusted data, using its tenant's own tools, is never blocked by the monitor – `Model.transparency`
+- **(e)** no needless denials: an agent that has read only its own tenant's trusted data, using its tenant's own tools, is never denied by the flow checks (Cedar and missing preconditions still can) – `Model.transparency`
 :::
 :::
 ::: {.column width="50%"}
 ::: {.fragment}
 **Assumed, not proven**
 
-- the session says who is calling (trusted session)
-- the adapter and the tool registry label correctly
-- every action goes through the monitor
-- no side channels (timing, sizes, …)
+- the session says who is calling (A1)
+- the adapter and the tool registry label correctly (A2, A6)
+- every action goes through the monitor (A3)
+- tools keep no state across calls (A4)
+- no side channels; the schedule does not depend on data (A5)
+- Cedar sees only principal and action (A7)
+- agents see `denied`, not the reason (A8)
 :::
 
 ::: {.fragment}
-**Tested, not proven:** the Python and JavaScript monitors (against the Lean oracle). **Nothing** is claimed about Cedar itself.
+**Tested, not proven:** the Python and JavaScript monitors (against the Lean oracle), and that the monitor never reads a label out of a payload (by construction). **Nothing** is claimed about Cedar itself.
 :::
 :::
 ::::
@@ -219,10 +222,10 @@ Cedar keeps least privilege per call. **Isolation comes from the monitor.**
 :::
 
 ::: {.fragment .small}
-The Lean oracle runs `Exec.step`; the Python monitor (gateway) and the JavaScript monitor (game) are tested against it on thousands of random scenarios.
+The Lean oracle runs `Exec.step`; the Python monitor (gateway) is tested against it on hundreds of random scenarios per run, the JavaScript monitor (game) on 2 400.
 :::
 
-## Benchmark: measured, not claimed
+## Benchmark: measured, not claimed {.dense}
 
 :::: {.columns}
 ::: {.column width="62%"}
@@ -236,13 +239,13 @@ The Lean oracle runs `Exec.step`; the Python monitor (gateway) and the JavaScrip
 | FIDES logic | {{< var leak.fides.kn >}} | {{< var forgery.fides.kn >}} | {{< var utility.fides.kn >}} |
 | TenantFlow | {{< var leak.tenantflow.kn >}} | {{< var forgery.tenantflow.kn >}} | {{< var utility.tenantflow.kn >}} |
 
-Utility is measured here; its proven counterpart is (e) `Model.transparency` (for agents that read only their own tenant's trusted data).
+Utility is measured; its proven counterpart is (e) `Model.transparency` (agents that read only their own tenant's trusted data and call only tenant-private tools).
 
 Random attacker, {{< var meta.episodes >}} runs: any violation in {{< var fuzz.cedar_only.any >}} (Cedar only) vs {{< var fuzz.tenantflow.any >}} (TenantFlow).
 :::
 
 ::: {.fragment .small}
-**Read with care:** TenantFlow's 0 is what the theorems predict (same label definitions), not independent evidence. Baselines are saturated by design; suites are small (n = 4–8). Latency per decision p50 ≈ {{< var latency.tenantflow.p50 >}} µs, almost all of it the Cedar call; the monitor alone (Cedar stubbed) p50 {{< var monitor_only.p50 >}} µs, p99 {{< var monitor_only.p99 >}} µs. Seed {{< var meta.seed >}}, revision `{{< var meta.git >}}`, `bench/results/results.json`.
+**Read with care:** TenantFlow's 0 is what the theorems predict (same label definitions), not independent evidence. Baselines are saturated by design; suites are small (n = 5–8). Latency per decision p50 ≈ {{< var latency.tenantflow.p50 >}} µs, almost all of it the Cedar call; the monitor alone (Cedar stubbed) p50 {{< var monitor_only.p50 >}} µs, p99 {{< var monitor_only.p99 >}} µs. Seed {{< var meta.seed >}}, revision `{{< var meta.git >}}`, `bench/results/results.json`.
 :::
 :::
 ::::

@@ -5,7 +5,8 @@ One gateway process serves one authenticated session (``--session``), set by who
 (the trusted session layer, assumption A1), never by the model. A client may address a child agent
 of that session with ``_meta["tenantflow/path"]`` (a list of child indices); it cannot leave its
 session. Every ``tools/call`` goes through ``Monitor.step``; only allowed calls reach the upstream.
-Result labels come from the tool registry in the config, not from the upstream's output.
+Result labels come from the tool registry in the config, not from the upstream's output. A denied
+call returns only ``denied``; the reason goes to the log on stderr (spec §9, A8).
 
 Tools offered: ``rag_query`` ``{"q"}``, ``rag_write`` ``{"payload"}``, ``deliver`` (answer to the
 own user), and every registry tool that the upstream also offers (with the upstream's input schema).
@@ -16,6 +17,8 @@ The JSON-RPC proxy in ``gateway.py`` (no SDK) is kept for the tests that run wit
 from __future__ import annotations
 
 import json
+import logging
+import sys
 from typing import Any
 
 from mcp import ClientSession, types
@@ -25,6 +28,8 @@ from mcp.server.stdio import stdio_server
 
 from .check import load_config
 from .monitor import Action, Monitor, monitor_from_scenario
+
+log = logging.getLogger("tenantflow.gateway")
 
 BUILTIN_SCHEMAS = {
     "rag_query": {"type": "object", "properties": {"q": {"type": "string"}}, "required": ["q"]},
@@ -73,11 +78,13 @@ def make_server(
     async def call_tool(ctx: Any, params: types.CallToolRequestParams) -> types.CallToolResult:
         name, args = params.name, dict(params.arguments or {})
         if name not in BUILTIN_SCHEMAS and name not in offered:
-            return _text(f"denied: unknown tool {name}", error=True)
+            log.info("denied %s: unknown tool", name)
+            return _text("denied", error=True)
         agent = (session, _path(params.meta))
         resp = mon.step(agent, action_for(name, args))
-        if resp.denied:
-            return _text(f"denied: {resp.value}", error=True)
+        if resp.denied:  # A8: the reason is for the operator's log, not for the agent
+            log.info("denied %s %s: %s", agent, name, resp.value)
+            return _text("denied", error=True)
         if name == "rag_query":
             return _text(resp.value)
         if name == "rag_write":
@@ -100,6 +107,7 @@ async def serve(config_path: str, session: str, upstream: list[str]) -> None:
     mon = monitor_from_scenario(sc, authorizer)
     if (session, ()) not in mon.agents:
         raise SystemExit(f"unknown session {session}")
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(name)s: %(message)s")
     params = StdioServerParameters(command=upstream[0], args=upstream[1:])
     async with stdio_client(params) as (ur, uw), ClientSession(ur, uw) as up:
         await up.initialize()

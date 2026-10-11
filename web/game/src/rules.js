@@ -96,10 +96,10 @@
         detail: "Monitor rule for call: every observer of the tool must be allowed to read the agent's context label. The label comes from where the data was read, not from what it says.",
         theorem: "Model.isolation", slide: slide(6, "The invariant as a formula") };
       if (r.startsWith("flow: tool requires trusted")) return { tone: "blocked", short: "TenantFlow blocks it: this tool needs trusted input, and the agent has read untrusted data.",
-        detail: "Monitor rule for call: a tool with needsTrusted requires an integrity-trusted context. The registry marks that source untrusted; a label written inside the data is ignored.",
-        theorem: "Model.isolation_int", slide: slide(5, "The forgery attack") };
+        detail: "Monitor rule for call: a tool with needsTrusted requires an integrity-trusted context. The registry marks that source untrusted, and labels cover the labels of all sources, integrity included. That a label written inside the data is never read is by construction and tested, not a theorem.",
+        theorem: "Model.isolation_int", also: "Model.no_launder", slide: slide(5, "The forgery attack") };
       if (r.startsWith("flow: tainted")) return { tone: "blocked", short: "TenantFlow blocks it: this agent has read another tenant's data and may not write to the shared index.",
-        detail: "Monitor rule for write: the agent's context must be readable by its own tenant.", theorem: "Model.isolation", slide: slide(4, "Labels") };
+        detail: "Monitor rule for write: the agent's context must be readable by its own tenant. Whatever is written keeps the writer's label, which covers all its sources.", theorem: "Model.no_launder", slide: slide(4, "Labels") };
       if (r.startsWith("fides:")) return { tone: "blocked", short: "FIDES blocks it: it considers the context untrusted.", detail: "FIDES 1.5.0 label logic (re-implemented): needs-trusted tools refuse an untrusted context.", slide: slide(5, "The forgery attack") };
       return { tone: "blocked", short: `Not possible: ${r}.`, detail: `Monitor precondition: ${r}.` };
     }

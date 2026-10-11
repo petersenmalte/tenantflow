@@ -91,7 +91,7 @@
           h("strong", null, m.name), h("span", null, cmp[m.id] ? (l.goal === "forgedPay" ? "pays" : "leaks") : "blocks"))))) : null,
       h("details", null, h("summary", null, "Details"), h("p", null, l.lessonDetail),
         (l.theorems || []).length ? h("p", null, "Lean: ", (l.theorems || []).flatMap((t, i) => [i ? ", " : "", thmLink(t)])) : null,
-        h("p", { class: "small muted" }, "Guarantees hold in the Lean model under the spec's assumptions: trusted session, trusted adapter and tool registry, complete mediation, no side channels.")),
+        h("p", { class: "small muted" }, "Guarantees hold in the Lean model under the spec's assumptions: trusted session, adapter and tool registry, complete mediation, stateless tools, Cedar sees only principal and action, agents do not see denial reasons, no side channels incl. data-independent scheduling (A1–A8 in docs/spec.md §9). That the monitor never reads a label out of a payload is by construction and tested, not a theorem.")),
       h("div", { class: "row" },
         state.mode !== "tenantflow" ? h("button", { type: "button", class: "primary", onclick: () => { state.mode = "tenantflow"; restart(); } }, "Try it with TenantFlow") : null,
         state.level < LEVELS.length - 1 ? h("button", { type: "button", class: state.mode === "tenantflow" ? "primary" : "", onclick: () => { state.level++; start(); } }, "Next level →") : null));

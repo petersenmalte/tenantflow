@@ -2,25 +2,26 @@
 
 Overwritten at the end of every session. Keep it short; the next session reads only this, CLAUDE.md and TASKS.md.
 
-- **Last session:** F7 (claude-fable-5-1). Claim review of README, deck and game against the Lean statements:
-  `docs/claim-review.md` (7 findings: 1 overstated, 5 incomplete hypotheses/assumptions, 1 loose citation; the rest
-  is covered exactly). No theorem statement changed, `lean/` untouched. Spec §9 gained **A8** (agents do not observe
-  denial reasons; implicit in `Exec.run`'s `⌊·⌋`), changelog row added. Fable spend before F7: 50 USD (user enters
-  the spend after F7 in `docs/fable-budget.md`).
+- **Last session:** O2 final review (claude-opus-5-5), including S23 (F7 claim-review fixes). All tasks except S11
+  (website) and S6 (optional real-LLM run) are done. CI green; `lake build`, pytest (41, extras `mcp` + `fides`),
+  game tests (68) and `quarto render` pass.
 - **Open `sorry`s:** none.
-- **Next:**
-  1. **S23 [SONNET]** apply the F7 fixes (exact locations and wording in `docs/claim-review.md` §1 / `TASKS.md` S23),
-     including the gateway change: agent sees `denied` only, reason goes to the log.
-  2. O2 [OPUS] final review (after S23), then S11 (website; ask for the repo location). S6 only after asking.
-  3. F5 stays deferred (budget). Remaining Fable budget after F7 is reserve for fixes found by differential testing.
+- **Next:** S11 [SONNET] – integrate deck and game into petersenmalte.de (ask the user for the repository location).
+  S6 only after the user approves API costs.
 - **Know before editing:**
-  - Do not overclaim (e): hypotheses `Single t ctx` **and** tenant-private tool; a `Single` agent can still be denied
-    by Cedar, an unregistered tool, a missing session/parent/child. "Never denied by the flow checks" is the correct
-    phrase, "never blocked by the monitor" is not.
-  - (b) at model level = `Model.no_launder` (pointwise ⊑ incl. integrity, so untrusted origins force untrusted
-    objects; holds on `Exec` traces via `Exec.refines_ghost`). Payload independence of the executable monitor ((b1),
-    "labels in data are ignored") is by construction + tested, not a theorem.
-  - Assumption lists must name A1–A8 (A4 stateless tools, A7 Cedar inputs and A8 were missing everywhere).
+  - Claims: every guarantee sentence in README, deck and game is checked in `docs/claim-review.md`; changing wording
+    means re-checking against `docs/spec.md` §7 and the assumptions A1–A8 (§9).
   - Game (`web/game`): logic `src/play.js`, view `src/board.js` (also used by the deck), monitor `src/monitor.js`.
     After changing levels or `lean/`, regenerate fixtures and `src/theorems.js` (commands in `web/game/README.md`).
-  - Deck (`web/deck`): render the project (`quarto render` in `web/deck`), not the single file.
+  - Deck (`web/deck`): render the project (`quarto render` in `web/deck`); `_variables.yml` and `_isolation.lean` are
+    committed and checked by `python/tests/test_deck.py`. The game links slides as `../deck/index.html#/N`.
+  - Benchmark: run only on a pushed commit (`git pull --rebase && git push` first); results now from `8caa375`.
+  - Gateways return only `denied` to agents (A8); reasons go to the log.
+- **Deviations and limits** (details in the READMEs of `web/game`, `web/deck`, `bench`, `python`):
+  - Game and deck checked in headless Chrome (desktop, 390 px phone, dark mode, real mouse drag); no screen-reader or
+    real-touch test, deck not tried on a projector.
+  - Level 2 under TenantFlow: the write is allowed, the search filters (brief said "blocks step 2").
+  - FIDES = re-implementation of the agent-framework-core 1.5.0 label logic; forgery only under the APIsec PoC
+    conditions (2/5), utility 7/8 because hiding blocks reading fetched content.
+  - Cedar schema hand-written (generator not used, reasons in `python/README.md`).
+  - Cause of the missing CI runs before `e5f6ec8` unknown.

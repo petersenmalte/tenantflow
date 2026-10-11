@@ -58,9 +58,11 @@ labels and enforces policies deterministically, evaluated on AgentDojo. <https:/
 FIDES ships as experimental middleware in Microsoft Agent Framework (Python); its security documentation models
 principals with `tenant_id` / `user_id`. <https://learn.microsoft.com/agent-framework/agents/security>
 
-*Relation:* TenantFlow uses the same label structure (confidentiality + integrity, floating context label) and
-compares against the FIDES middleware as a baseline (S4). The difference is where labels come from: TenantFlow
-attaches them only from trusted metadata (theorem (b)).
+*Relation:* both use a floating context label with an integrity axis and enforce outside the model. FIDES's
+confidentiality axis (public / private / user identity) has no tenant, and for a tool without a `source_integrity`
+declaration FIDES takes the result label from labels found in the call arguments (the APIsec forgery below).
+TenantFlow's labels carry tenant owners and come only from the session and the tool registry (theorem (b)
+`Model.no_launder`). The benchmark compares against a re-implementation of the 1.5.0 label logic (`bench/README.md`).
 
 ## APIsec Labs: label forgery in FIDES
 

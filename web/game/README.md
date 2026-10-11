@@ -47,7 +47,7 @@ node scripts/gen_theorems.js     # Lean line links; the test only warns when the
 * Level 5 has no vault tool: a tool that hands bank-labelled data to an insurer principal is a registry error
   (assumption A2), which the monitor does not claim to catch. Bank data lives in the index there.
 * The fuzzer is a bounded random search; "nothing found" is not a proof. The guarantee is the Lean theorem, under the
-  spec's assumptions (trusted session, adapter, registry; complete mediation; no side channels).
+  spec's assumptions (trusted session, adapter and tool registry, complete mediation, stateless tools, Cedar sees only principal and action, agents do not see denial reasons, no side channels incl. data-independent scheduling (A1–A8 in docs/spec.md §9)). That the monitor never reads a label out of a payload is by construction and tested (spec §7.3 (b1), D8), not a theorem.
 * The JS monitor is tested, not proven, against the oracle; the oracle is `Exec.step`, which theorem (d) relates to the model.
 * Checked in headless Chrome (desktop 1280 px, phone 390 px, dark mode, real mouse drag, click-to-place); not yet checked
   with a screen reader or on a real touch device. The "Why?" panel is called "Why?" (repository language is English).

@@ -62,7 +62,7 @@ test("theorem (e) is cited only when its hypothesis holds", () => {
   assert.strictEqual(r1.entries[0].why.also, "Model.transparency"); // bank agent, fresh context, vault has no observers
   const s3 = new Session(L.LEVELS[2], "tenantflow");
   MOVES[3](s3); // after the untrusted reply the agent is no longer Single
-  assert.strictEqual(s3.log[1].why.also, undefined);
+  assert.notStrictEqual(s3.log[1].why.also, "Model.transparency");
   assert.ok(THEOREMS["Model.transparency"] && THEOREMS["Exec.transparency_denied"]);
 });
 

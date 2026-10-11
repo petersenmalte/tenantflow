@@ -51,3 +51,7 @@ body { background: #fff; }
 .reveal .arch .box.hl { border-color: #1b7f4b; background: #dcf3e6; }
 .reveal .arch .arr { font-size: .9em; color: #5b6472; align-self: center; }
 .reveal .play { display: inline-block; background: #18202b; color: #fff !important; padding: .25em .7em; border-radius: 12px; }
+
+// dense slides (long lists)
+.reveal .slides section.dense { font-size: .8em; }
+.reveal .slides section.dense h2 { font-size: 1.8em; }

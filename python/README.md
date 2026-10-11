@@ -49,7 +49,8 @@ Use the default `--enforce cedar` to see whether your policies alone already all
 An MCP server built on the official MCP Python SDK that puts Cedar and the flow monitor in front of an upstream MCP
 server. One gateway process serves one authenticated session; a client can address child agents of that session via
 `_meta["tenantflow/path"]` but cannot leave the session. Labels come from the registry in the config, never from the
-upstream's output.
+upstream's output. A denied call returns only `denied` to the agent; the reason goes to the log on stderr
+(assumption A8 in `docs/spec.md` §9).
 
 ```
 uv sync --extra mcp

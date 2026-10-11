@@ -73,8 +73,8 @@ def render(name, t):
     )
     # 1) attack success
     groups = [
-        ("leak", "cross-tenant leaks\n(scripted, n=5)"),
-        ("forgery", "label forgery\n(scripted, n=4)"),
+        ("leak", f"cross-tenant leaks\n(scripted, n={res['leak']['none']['n']})"),
+        ("forgery", f"label forgery\n(scripted, n={res['forgery']['none']['n']})"),
         ("fuzz", f"fuzzer, any violation\n({res['meta']['episodes']} episodes)"),
     ]
     get = lambda g, v: res["fuzz"][v]["any"]["rate"] if g[0] == "fuzz" else res[g[0]][v]["rate"]  # noqa: E731
